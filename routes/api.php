@@ -12,5 +12,12 @@ Route::get('/user', function (Request $request) {
 
 Route::get('redirectToGateway', [PaymentController::class, 'redirectToGateway']);
 Route::get('handleGatewayCallback', [PaymentController::class, 'handleGatewayCallback']);
+Route::get('getPaymentData', [PaymentController::class, 'getPaymentData']);
+Route::get('getAllCustomers', [PaymentController::class, 'getAllCustomers']);
+Route::get('getAllTransactions', [PaymentController::class, 'getAllTransactions']);
 
-//Route::post('/pay', 'PaymentController@redirectToGateway')->name('pay');
+
+
+
+
+

@@ -8,6 +8,7 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Redirect;
 use Paystack;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -40,15 +41,52 @@ class PaymentController extends Controller
 
         $data = array(
             "amount" => 700 * 100,
-            "reference" => '4g4g5485g8545jgdgshlj',
+            "reference" => 'zbxgfchbfcvghmj',
             "email" => 'user@mail.com',
             "currency" => "GHS",
             "orderID" => 23456,
+            "first_name"=> "Solomon",
+            "last_name"=> "Danso",
+
+            "phone"=> "0599626272",
+
         );
 
-    return Paystack::getAuthorizationUrl($data)->redirectNow();
+        $worked= false;
+
+        try{
+
+            Paystack::getAuthorizationUrl($data)->redirectNow();
+            $worked = true;
+        }
+        catch(Exception $e){
+            $worked = false;
+        }
 
 
+
+    return $worked ;
     }
+
+
+
+
+    public function getPaymentData(){
+
+        return Paystack::getPaymentData();;
+    }
+
+    public function getAllCustomers(){
+
+        return Paystack::getAllTransactions();
+    }
+
+    public function getAllTransactions(){
+
+        return Paystack::getAllTransactions();
+    }
+
+
+
 }
 
