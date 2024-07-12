@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Redirect;
 use Paystack;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class PaymentController extends Controller
 {
@@ -26,45 +27,53 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * Obtain Paystack payment information
-     * @return void
-     */
+
+
+
     public function makePayment()
     {
+        // Step 1: Generate a transaction reference
         $tref = Paystack::genTranxRef();
 
-        $data = array(
-            "amount" => 3*100,
+        // Step 2: Prepare data for the POST request
+        $postData = [
+            "tref" => $tref,
+            "ProductId" => 1, // Replace with actual ProductId
+            "Product" => "Example Product", // Replace with actual product name
+            "Username" => "solomon@gmail.com",
+            "Amount" => 300, // Amount in smallest currency unit (e.g., kobo)
+            "SuccessApi" => "https://adminpanel.hydottech.com/", // Replace with actual success URL
+            "CallbackURL" => "https://adminpanel.hydottech.com/" // Replace with actual callback URL
+        ];
+
+        // Step 3: Send the POST request using Http facade
+        $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', $postData);
+
+        // Handle the response (optional, based on your requirement)
+        if ($response->failed()) {
+            return response()->json(["message" => "Error sending POST request."], 400);
+        }
+
+        // Step 4: Create a payment model
+        // $payment = new Payment();
+        // $payment->tref = $tref;
+        // $payment->confirmedPayment = false;
+        // $payment->save();
+
+        // Step 5: Prepare data for Paystack authorization URL
+        $paystackData = [
+            "amount" => 300*100, 
             "reference" => $tref,
             "email" => 'solomon@gmail.com',
             "currency" => "GHS",
             "orderID" => 23456,
-            "first_name"=> "Solomon",
-            "last_name"=> "Danso",
+            "first_name" => "Solomon",
+            "last_name" => "Danso",
+            "phone" => "0599626272",
+        ];
 
-            "phone"=> "0599626272",
-
-        );
-
-        /*
-
-        Create a payment model
-        With tref, and confirmedPayment set to false
-
-        In the redirect page, capture the tref value, pass it through an api.
-        if it exist in the database, set confirmedPayment to true
-        Then redirect to the order details of the specific order page
-
-        If not, send a strong warning to the user
-
-
-        */
-
-
-
-
-    return Paystack::getAuthorizationUrl($data)->redirectNow();
+        // Redirect to the Paystack authorization URL
+        return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
     }
 
 
