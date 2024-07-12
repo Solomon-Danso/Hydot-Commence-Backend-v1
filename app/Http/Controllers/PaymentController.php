@@ -30,19 +30,14 @@ class PaymentController extends Controller
      * Obtain Paystack payment information
      * @return void
      */
-    public function handleGatewayCallback()
+    public function makePayment()
     {
-        //$paymentDetails = Paystack::getPaymentData();
-
-       // dd($paymentDetails);
-        // Now you have the payment details,
-        // you can store the authorization_code in your db to allow for recurrent subscriptions
-        // you can then redirect or do whatever you want
+        $tref = Paystack::genTranxRef();
 
         $data = array(
-            "amount" => 700 * 100,
-            "reference" => 'zbxgfchbfcvghmj',
-            "email" => 'user@mail.com',
+            "amount" => 3*100,
+            "reference" => $tref,
+            "email" => 'solomon@gmail.com',
             "currency" => "GHS",
             "orderID" => 23456,
             "first_name"=> "Solomon",
@@ -52,20 +47,24 @@ class PaymentController extends Controller
 
         );
 
-        $worked= false;
+        /*
 
-        try{
+        Create a payment model
+        With tref, and confirmedPayment set to false
 
-            Paystack::getAuthorizationUrl($data)->redirectNow();
-            $worked = true;
-        }
-        catch(Exception $e){
-            $worked = false;
-        }
+        In the redirect page, capture the tref value, pass it through an api.
+        if it exist in the database, set confirmedPayment to true
+        Then redirect to the order details of the specific order page
+
+        If not, send a strong warning to the user
+
+
+        */
 
 
 
-    return $worked ;
+
+    return Paystack::getAuthorizationUrl($data)->redirectNow();
     }
 
 
