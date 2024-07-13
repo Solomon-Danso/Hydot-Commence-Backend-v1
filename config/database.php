@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mssql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -57,6 +57,15 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+        ],
+        'mssql' => [
+            'driver'   => 'sqlsrv',
+            'host'     => env('DB_HOST', '127.0.0.1'),
+            'database' => env('DB_DATABASE', 'your_database_name'),
+            'username' => env('DB_USERNAME', 'your_username'),
+            'password' => env('DB_PASSWORD', 'your_password'),
+            'charset'  => 'utf8',
+            'prefix'   => '',
         ],
 
         'mariadb' => [

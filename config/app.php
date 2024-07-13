@@ -14,6 +14,7 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    'setup_completed' => env('ADMIN_SETUP_COMPLETED', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -54,7 +55,7 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
