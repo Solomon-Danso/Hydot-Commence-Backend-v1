@@ -65,6 +65,7 @@ function Auditor($UserId, $Action) {
     if ($stu == null) {
         return response()->json(["message" => "Admin does not exist"], 400);
     }
+    
 
     $googleMapsLink = $latitude && $longitude ? "https://maps.google.com/?q={$latitude},{$longitude}" : '';
 
@@ -79,7 +80,7 @@ function Auditor($UserId, $Action) {
     $auditTrail->action = $Action ?? " ";
     $auditTrail->googlemap = $googleMapsLink ?? " ";
     $auditTrail->userId = $stu->UserId ?? " ";
-    $auditTrail->userName = $stu->Name;
+    $auditTrail->userName = $stu->Username?? " ";
     $auditTrail->userPic = $stu->Picture ?? " ";
 
     $auditTrail->save();
