@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\UserFunctions;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use App\Models\RateLimitCatcher;
 
 
 class AuditTrialController extends Controller
@@ -385,6 +386,71 @@ function RoleAuthenticator($SenderId, $RoleFunction){
     return response()->json(['success' => 'true'], 200);
 }
 
+public function RateLimitTracker($Ip) {
+    $ipAddress = $Ip; // Get user's IP address
+
+    try {
+        // Initialize cURL session
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://ipinfo.io/{$ipAddress}/json");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $response = curl_exec($ch);
+
+        // Check if any error occurred
+        if (curl_errno($ch)) {
+            throw new \Exception('cURL error: ' . curl_error($ch));
+        }
+
+        // Close cURL session
+        curl_close($ch);
+
+        // Decode JSON response
+        $ipDetails = json_decode($response);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \Exception('JSON decoding error: ' . json_last_error_msg());
+        }
+
+        Log::info('The IP DETAILS:', (array)$ipDetails);
+
+        $country = $ipDetails->country ?? 'Unknown';
+        $city = $ipDetails->city ?? 'Unknown';
+        $location = $ipDetails->loc ?? ''; // Latitude and Longitude
+        $latitude = $location ? explode(',', $location)[0] : '';
+        $longitude = $location ? explode(',', $location)[1] : '';
+    } catch (\Exception $e) {
+        Log::error('Error in Visitors function: ' . $e->getMessage());
+        $country = $city = $latitude = $longitude = 'Unknown';
+    }
+
+    // Get user agent information
+    $userAgent = $_SERVER['HTTP_USER_AGENT'];
+
+    // Parse the user agent string to determine device and OS
+    $device = $this->detectDevice($userAgent);
+    $os = $this->detectOperatingSystem($userAgent);
+
+    // URL path
+    $urlPath = $_SERVER['REQUEST_URI'];
+
+    $googleMapsLink = $latitude && $longitude ? "https://maps.google.com/?q={$latitude},{$longitude}" : '';
+
+    // Create a new AuditTrail instance and save the log to the database
+    $auditTrail = new RateLimitCatcher();
+    $auditTrail->IpAddress = $ipAddress ?? " ";
+    $auditTrail->Country = $country ?? " ";
+    $auditTrail->City = $city ?? " ";
+    $auditTrail->Device = $device ?? " ";
+    $auditTrail->Os = $os ?? " ";
+    $auditTrail->googlemap = $googleMapsLink ?? " ";
+
+    $auditTrail->save();
+
+    return response()->json(['success' => 'true'], 200);
+}
+
+
+
 
 function RoleList(Request $req){
     $this->audit->RateLimit($req->ip());
@@ -426,17 +492,22 @@ return $RoleList;
 
 
 
-function RateLimit($Ip){
+function RateLimit($Ip)
+{
+
     $key = $Ip;
-    $maxAttempts = 60;
+    $maxAttempts = 10;
+
     $decayMinutes = 1;
+
+
     if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
+        $this->RateLimitTracker($Ip);
         throw new ThrottleRequestsException('Too many requests. Please try again later.');
     }
 
-    RateLimiter::hit($key, $decayMinutes * 60);
+     RateLimiter::hit($key, $decayMinutes * 60);
 }
-
 
 
     function TokenGenerator(): string {
