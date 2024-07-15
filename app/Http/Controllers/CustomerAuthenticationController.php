@@ -18,7 +18,7 @@ class AuthenticationController extends Controller
 
 public function CustomerLogIn(Request $req)
     {
-
+        $this->audit->RateLimit($req->ip());
         // Use your custom Authentication model to authenticate
         $user = Customer::where('Email', $req->Email)->first();
         $user->TokenId = $this->IdGenerator();
@@ -104,7 +104,7 @@ public function CustomerLogIn(Request $req)
 
 public function CustomerForgetPasswordStep1(Request $req)
     {
-
+        $this->audit->RateLimit($req->ip());
         // Use your custom Authentication model to authenticate
         $user = Customer::where('Email', $req->Email)->first();
 
@@ -151,7 +151,8 @@ public function CustomerForgetPasswordStep1(Request $req)
 
 
 function CustomerForgetPasswordStep2(Request $req){
-        $user = Customer::where('Email', $req->Email)->first();
+    $this->audit->RateLimit($req->ip());
+    $user = Customer::where('Email', $req->Email)->first();
 
         if ($user == null) {
             return response()->json(["message" => "User does not exist"], 400);
@@ -191,6 +192,7 @@ function CustomerForgetPasswordStep2(Request $req){
 
 
 function CustomerVerifyToken(Request $req){
+    $this->audit->RateLimit($req->ip());
     $user = Customer::where('Email', $req->Email)->first();
 
     if ($user == null) {

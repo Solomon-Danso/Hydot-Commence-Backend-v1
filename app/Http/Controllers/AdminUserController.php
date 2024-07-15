@@ -10,6 +10,7 @@ use App\Http\Controllers\AuditTrialController;
 use Illuminate\Support\Facades\Config;
 use App\Mail\Registration;
 use Carbon\Carbon;
+use App\Models\UserFunctions;
 
 class AdminUserController extends Controller
 {
@@ -25,12 +26,14 @@ class AdminUserController extends Controller
 
 
 public function Test(){
-    return "Test is Good";
+    $this->audit->RateLimit($req->ip());
+    return "Api is working succcessfully";
 }
 
 
 public function SetUpCreateAdmin(Request $req)
     {
+        $this->audit->RateLimit($req->ip());
         if (Config::get('app.setup_completed')) {
             return response()->json(["message" => "Admin setup has already been completed"], 400);
         }
@@ -63,6 +66,12 @@ public function SetUpCreateAdmin(Request $req)
 
         if ($s->save()) {
 
+            $role = new UserFunction();
+            $role->UserId = $s->UserId;
+            $role->Function = "SuperAdmin";
+            $role->save();
+
+
             try {
                 Mail::to($s->Email)->send(new Registration($s, $rawPassword));
                  // Set the flag to true after successful setup
@@ -81,7 +90,8 @@ public function SetUpCreateAdmin(Request $req)
 
 public function CreateAdmin(Request $req)
     {
-
+        $this->audit->RateLimit($req->ip());
+        $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Admin");
 
         $s = new AdminUser();
 
@@ -104,6 +114,8 @@ public function CreateAdmin(Request $req)
 
         $saver = $s->save();
         if($saver){
+
+
 
             $message = $s->Username."  was added as an administrator";
             $message2 = $s->Username."  is added as an administrator";
@@ -166,6 +178,8 @@ protected function updateEnv($data = array())
 
 
    function UpdateAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Admin");
 
     $s = AdminUser::where("UserId", $req->UserId)->first();
 
@@ -224,6 +238,8 @@ protected function updateEnv($data = array())
 
 
 function ViewSingleAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Single_Admin");
     $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -240,6 +256,8 @@ function ViewSingleAdmin(Request $req){
 
 
 function BlockAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_Block_Admin");
     $s = AdminUser::where("UserId", $req->UserId)->where('Role', '!=', 'SuperAdmin')->first();
 
     if($s==null){
@@ -264,6 +282,8 @@ function BlockAdmin(Request $req){
 }
 
 function UnBlockAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_UnBlock_Admin");
     $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -290,6 +310,8 @@ function UnBlockAdmin(Request $req){
 
 
 function SuspendAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_Suspend_Admin");
     $s = AdminUser::where("UserId", $req->UserId)->where('Role', '!=', 'SuperAdmin')->first();
 
     if($s==null){
@@ -314,6 +336,8 @@ function SuspendAdmin(Request $req){
 }
 
 function UnSuspendAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_UnSuspend_Admin");
     $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -343,6 +367,7 @@ function UnSuspendAdmin(Request $req){
 
 
 function UnLocker(Request $req){
+    $this->audit->RateLimit($req->ip());
     $s = AdminUser::where("Email", $req->Email)->where('Role', 'SuperAdmin')->first();
 
     if($s==null){
@@ -376,6 +401,8 @@ function UnLocker(Request $req){
 
 
 function ViewAllAdmin(Request $req) {
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_All_Admin");
     $s = AdminUser::where('Role', '!=', 'SuperAdmin')->get();
 
     if ($s->isEmpty()) {
@@ -394,6 +421,8 @@ function ViewAllAdmin(Request $req) {
 
 
 function DeleteAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Admin");
     $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){

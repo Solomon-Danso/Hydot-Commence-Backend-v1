@@ -18,7 +18,7 @@ class AuthenticationController extends Controller
 
 public function LogIn(Request $req)
     {
-
+        $this->audit->RateLimit($req->ip());
         // Use your custom Authentication model to authenticate
         $user = AdminUser::where('Email', $req->Email)->first();
         $user->TokenId = $this->IdGenerator();
@@ -104,6 +104,7 @@ public function LogIn(Request $req)
 
     public function ForgetPasswordStep1(Request $req)
     {
+        $this->audit->RateLimit($req->ip());
 
         // Use your custom Authentication model to authenticate
         $user = AdminUser::where('Email', $req->Email)->first();
@@ -151,6 +152,7 @@ public function LogIn(Request $req)
 
 
 function ForgetPasswordStep2(Request $req){
+    $this->audit->RateLimit($req->ip());
         $user = AdminUser::where('Email', $req->Email)->first();
 
         if ($user == null) {
@@ -191,6 +193,7 @@ function ForgetPasswordStep2(Request $req){
 
 
     function VerifyToken(Request $req){
+        $this->audit->RateLimit($req->ip());
     $user = AdminUser::where('Email', $req->Email)->first();
 
     if ($user == null) {

@@ -9,6 +9,9 @@ use App\Models\Visitors;
 use App\Models\CustomerTrail;
 use App\Models\ProductAssessment;
 use Illuminate\Support\Facades\Log;
+use App\Models\UserFunctions;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 
 
 class AuditTrialController extends Controller
@@ -65,7 +68,7 @@ function Auditor($UserId, $Action) {
     if ($stu == null) {
         return response()->json(["message" => "Admin does not exist"], 400);
     }
-    
+
 
     $googleMapsLink = $latitude && $longitude ? "https://maps.google.com/?q={$latitude},{$longitude}" : '';
 
@@ -222,6 +225,96 @@ function ProductAssessment($productId, $Action) {
 }
 
 
+function CreateUserRole(Request $req){
+
+    $this->RoleAuthenticator($req->AdminId, "Can_Create_Role");
+
+    $staff = AdminUser::where("UserId",$req->UserId)->first();
+    if($staff==null){
+        return response()->json(["message"=>"Staff does not exist"],400);
+    }
+
+    $s = new UserFunctions();
+
+    if($req->filled("UserId")){
+        $s->UserId = $req->UserId;
+    }
+
+    if($req->filled("Function")){
+        $s->Function = $req->Function;
+    }
+
+   $saver = $s->save();
+   if($saver){
+    $message =  $s->Function." function has been assigned to ".$staff->Username;
+    return response()->json(["message"=>$message],200);
+   }
+   else{
+    return response()->json(["message"=>"Could not assign"],400);
+   }
+
+}
+
+function ViewUserFunctions(Request $req){
+    $this->RoleAuthenticator($req->AdminId, "Can_View_Role");
+
+    $role = UserFunctions::where("UserId", $req->UserId)->get();
+    return $role;
+}
+
+function DeleteUserRole(Request $req){
+    $this->RoleAuthenticator($req->AdminId, "Can_Delete_Role");
+    $role = UserFunctions::where("UserId", $req->UserId)->where("Function", $req->Function)->first();
+    if($role==null){
+        return response()->json(["message"=>"Staff member is not assigned to this role"],400);
+    }
+
+    $saver = $role->delete();
+    if($saver){
+        $message =  $s->Function." function was deleted from ".$staff->Username."'s functions";
+        $message2 =  $s->Function." function has been deleted from ".$staff->Username."'s functions";
+
+        $this->Auditor($req->AdminId, $message);
+
+        return response()->json(["message"=>$message2],200);
+       }
+       else{
+        return response()->json(["message"=>"Could not delete"],400);
+       }
+
+
+
+}
+
+
+function RoleAuthenticator($SenderId, $RoleFunction){
+
+    $RoleFunctionList = UserFunctions::where("UserId",$SenderId)->pluck('RoleFunction');
+
+    // Check if the RoleFunctionList is empty
+    if($RoleFunctionList->isEmpty()) {
+        return response()->json(["message"=>"User does not have any roles assigned"],400);
+    }
+
+    // Flag to track if SuperAdmin role is found
+    $isSuperAdmin = false;
+
+    foreach($RoleFunctionList as $Role){
+        if($Role === "SuperAdmin"){
+            // If the user is SuperAdmin, set the flag to true and break the loop
+            $isSuperAdmin = true;
+            break;
+        }
+    }
+
+    // If the user is not SuperAdmin and the specified role does not match any of the user's roles
+    if (!$isSuperAdmin && !$RoleFunctionList->contains($RoleFunction)) {
+        return response()->json(["message"=>"User not authorised to perform this task"],400);
+    }
+
+    }
+
+
 
 
 
@@ -290,6 +383,58 @@ function ProductAssessment($productId, $Action) {
     $auditTrail->save();
 
     return response()->json(['success' => 'true'], 200);
+}
+
+
+function RoleList(Request $req){
+    $this->audit->RateLimit($req->ip());
+$RoleList = [
+    "Can_Create_Role",
+    "Can_View_Role",
+    "Can_Delete_Role",
+    "Can_Create_Admin",
+    "Can_Update_Admin",
+    "Can_View_Single_Admin",
+    "Can_Block_Admin",
+    "Can_UnBlock_Admin",
+    "Can_Suspend_Admin",
+    "Can_UnSuspend_Admin",
+    "Can_View_All_Admin",
+    "Can_Delete_Admin",
+    "Can_Create_Menu",
+    "Can_Delete_Menu",
+    "Can_Create_Category",
+    "Can_Update_Category",
+    "Can_View_A_Single_Category",
+    "Can_Delete_Category",
+    "Can_Create_Product",
+    "Can_Update_Product",
+    "Can_Delete_Product"
+
+
+
+
+
+];
+
+sort($RoleList);
+return $RoleList;
+
+}
+
+
+
+
+
+function RateLimit($Ip){
+    $key = $Ip;
+    $maxAttempts = 60;
+    $decayMinutes = 1;
+    if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
+        throw new ThrottleRequestsException('Too many requests. Please try again later.');
+    }
+
+    RateLimiter::hit($key, $decayMinutes * 60);
 }
 
 

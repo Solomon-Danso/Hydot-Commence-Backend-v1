@@ -18,7 +18,7 @@ class CustomerController extends Controller
 
 public function CreateCustomer(Request $req)
     {
-
+        $this->audit->RateLimit($req->ip());
 
         $s = new Customer();
 
@@ -58,7 +58,7 @@ public function CreateCustomer(Request $req)
 
 
 function UpdateCustomer(Request $req){
-
+    $this->audit->RateLimit($req->ip());
     $s = Customer::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -108,6 +108,7 @@ function UpdateCustomer(Request $req){
 
 
 function ViewSingleCustomer(Request $req){
+    $this->audit->RateLimit($req->ip());
     $s = Customer::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -223,6 +224,7 @@ function UnSuspendCustomer(Request $req){
 
 
 function ViewAllCustomer(Request $req) {
+    $this->audit->RateLimit($req->ip());
     $s = Customer::get();
 
     if ($s->isEmpty()) {
@@ -241,6 +243,7 @@ function ViewAllCustomer(Request $req) {
 
 
 function DeleteCustomer(Request $req){
+    $this->audit->RateLimit($req->ip());
     $s = Customer::where("UserId", $req->UserId)->first();
 
     if($s==null){

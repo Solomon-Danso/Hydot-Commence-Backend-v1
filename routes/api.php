@@ -9,6 +9,7 @@ use App\Http\Controllers\AuditTrialController;
 use App\Http\Controllers\AuthenticationController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerAuthenticationController;
+use App\Http\Controllers\MenuCategoryProduct;
 
 
 Route::get('/user', function (Request $request) {
@@ -30,14 +31,17 @@ Route::post('ForgetPasswordStep1', [AuthenticationController::class, 'ForgetPass
 Route::post('ForgetPasswordStep2', [AuthenticationController::class, 'ForgetPasswordStep2']);
 Route::post('Visitors', [AuditTrialController::class, 'Visitors']);
 Route::post('UnLocker', [AdminUserController::class, 'UnLocker']);
-Route::post('Test', [AdminUserController::class, 'Test']);
 
 Route::post('CustomerLogIn', [CustomerAuthenticationController::class, 'CustomerLogIn']);
 Route::post('CustomerVerifyToken', [CustomerAuthenticationController::class, 'CustomerVerifyToken']);
 Route::post('CustomerForgetPasswordStep1', [CustomerAuthenticationController::class, 'CustomerForgetPasswordStep1']);
 Route::post('CustomerForgetPasswordStep2', [CustomerAuthenticationController::class, 'CustomerForgetPasswordStep2']);
-
-
+Route::post('RoleList', [AuditTrialController::class, 'RoleList']);
+Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
+Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
+Route::post('ViewProduct', [MenuCategoryProduct::class, 'ViewProduct']);
+Route::post('ViewSingleProduct', [MenuCategoryProduct::class, 'ViewSingleProduct']);
+Route::post('TestRateLimit', [MenuCategoryProduct::class, 'TestRateLimit']);
 
 
 
@@ -45,6 +49,8 @@ Route::post('CustomerForgetPasswordStep2', [CustomerAuthenticationController::cl
 
 // Routes that require authentication
 Route::middleware([ApiAuthenticator::class])->group(function () {
+    //Configurations
+    Route::post('RoleList', [AuditTrialController::class, 'RoleList']);
 
     //Staff Members
     Route::post('SuspendAdmin', [AdminUserController::class, 'SuspendAdmin']);
@@ -55,7 +61,7 @@ Route::middleware([ApiAuthenticator::class])->group(function () {
     Route::post('UpdateAdmin', [AdminUserController::class, 'UpdateAdmin']);
     Route::post('ViewSingleAdmin', [AdminUserController::class, 'ViewSingleAdmin']);
     Route::post('DeleteAdmin', [AdminUserController::class, 'DeleteAdmin']);
-    Route::post('ViewAllAdmin', [AdminUserController::class, ' ViewAllAdmin']);
+    Route::post('ViewAllAdmin', [AdminUserController::class, 'ViewAllAdmin']);
 
 
     //Customers
@@ -63,7 +69,29 @@ Route::middleware([ApiAuthenticator::class])->group(function () {
     Route::post('UpdateCustomer', [CustomerController::class, 'UpdateCustomer']);
     Route::post('ViewSingleCustomer', [CustomerController::class, 'ViewSingleCustomer']);
     Route::post('DeleteCustomer', [CustomerController::class, 'DeleteCustomer']);
-    Route::post('ViewAllCustomer', [CustomerController::class, ' ViewAllCustomer']);
+    Route::post('ViewAllCustomer', [CustomerController::class, 'ViewAllCustomer']);
+
+    //MenuCategoryProduct
+    Route::post('CreateMenu', [MenuCategoryProduct::class, 'CreateMenu']);
+    Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
+    Route::post('DeleteMenu', [MenuCategoryProduct::class, 'DeleteMenu']);
+
+    Route::post('CreateCategory', [MenuCategoryProduct::class, 'CreateCategory']);
+    Route::post('UpdateCategory', [MenuCategoryProduct::class, 'UpdateCategory']);
+    Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
+    Route::post('ViewSingleCategory', [MenuCategoryProduct::class, 'ViewSingleCategory']);
+    Route::post('DeleteCategory', [MenuCategoryProduct::class, 'DeleteCategory']);
+
+    Route::post('CreateProduct', [MenuCategoryProduct::class, 'CreateProduct']);
+    Route::post('UpdateProduct', [MenuCategoryProduct::class, 'UpdateProduct']);
+    Route::post('ViewProduct', [MenuCategoryProduct::class, 'ViewProduct']);
+    Route::post('ViewSingleProduct', [MenuCategoryProduct::class, 'ViewSingleProduct']);
+    Route::post('DeleteProduct', [MenuCategoryProduct::class, 'DeleteProduct']);
+
+
+
+
+
 
 
 
