@@ -11,6 +11,8 @@ use App\Models\Order;
 use App\Models\MasterRepo;
 use App\Models\Payment;
 use Paystack;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -222,14 +224,21 @@ class CartOrderPayment extends Controller
 
     }
 
-    function ViewAllOrder(Request $req){
+    function ViewAllOrder(Request $req)
+    {
         $this->audit->RateLimit($req->ip());
 
-        $s = Order::where("UserId", $req->UserId) ->orderBy("created_at", "desc")->groupBy("OrderId")->get() ->map(function ($group) {
-            return $group->first();
-        });
+        $subQuery = Order::selectRaw('MAX(created_at) as latest_created_at')
+                         ->where('UserId', $req->UserId)
+                         ->groupBy('OrderId');
 
-        return $s;
+        $orders = Order::joinSub($subQuery, 'sub', function ($join) {
+            $join->on('orders.created_at', '=', 'sub.latest_created_at');
+        })->where('UserId', $req->UserId)
+          ->orderBy('created_at', 'desc')
+          ->get();
+
+        return $orders;
     }
 
     function DetailedOrder(Request $req){
@@ -239,22 +248,22 @@ class CartOrderPayment extends Controller
 
     }
 
-    function Payment($UserId, $OrderId){
-
-
+    public function Payment($UserId, $OrderId)
+    {
         $order = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->first();
-        if(!$order){
-            return response()->json(["message"=>"Order does not exist"],400);
+        if (!$order) {
+            return response()->json(["message" => "Order does not exist"], 400);
         }
 
         $r = Customer::where("UserId", $UserId)->first();
-        if(!$r){
-            return response()->json(["message"=>"Customer does not exist"],400);
+        if (!$r) {
+            return response()->json(["message" => "Customer does not exist"], 400);
         }
 
         $total = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->sum('Price');
 
-
+        // Ensure the total amount is an integer and in the smallest currency unit (e.g., kobo, pesewas)
+        $totalInPesewas = intval($total * 100);
 
         $tref = Paystack::genTranxRef();
 
@@ -267,23 +276,21 @@ class CartOrderPayment extends Controller
 
         $saver = $s->save();
         if ($saver) {
-
             $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', [
                 'tref' =>  $tref,
                 'ProductId' => "hdtCommerce",
                 'Product' => 'Hydot Commerce',
                 'Username' => $s->Phone,
                 'Amount' => $total,
-                'SuccessApi' => 'https://www.hydottech.com',//The Code to Execute if payment is successful
-                'CallbackURL' => 'http://localhost:3000/',//The redirect url to move the page to
+                'SuccessApi' => 'https://www.hydottech.com',
+                'CallbackURL' => 'http://localhost:3000/',
             ]);
 
-            // Handle the response if needed
             if ($response->successful()) {
-
+                Log::info('Total Amount', ['total' => $total]);
 
                 $paystackData = [
-                    "amount" => $total,
+                    "amount" => $totalInPesewas, // Amount in pesewas
                     "reference" => $tref,
                     "email" => $r->Email,
                     "currency" => "GHS",
@@ -291,22 +298,14 @@ class CartOrderPayment extends Controller
                     "phone" => $r->Phone,
                 ];
 
-                // Redirect to the Paystack authorization URL
                 return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
-
-
             } else {
-                return response()->json(["message"=>"External Payment Api is down"],400);
+                return response()->json(["message" => "External Payment Api is down"], 400);
             }
+        } else {
+            return response()->json(["message" => "Failed to initialize payment"], 400);
         }
-
-        else{
-            return response()->json(["message"=>"Failed to initialize payment"],400);
-        }
-
-
     }
-
 
 
 

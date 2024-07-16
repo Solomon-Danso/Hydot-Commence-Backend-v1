@@ -46,6 +46,7 @@ Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
 Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
 Route::get('makePayment', [PaymentController::class, 'makePayment']);
 
+Route::get('payment/{UserId}/{OrderId}', [CartOrderPayment::class, 'Payment']);
 
 
 
@@ -68,10 +69,17 @@ Route::get('getAllTransactions', [PaymentController::class, 'getAllTransactions'
  **********************************************/
 Route::post('UpdateCustomer', [CustomerController::class, 'UpdateCustomer']);
 Route::post('ViewSingleCustomer', [CustomerController::class, 'ViewSingleCustomer']);
+
 Route::post('AddToCart', [CartOrderPayment::class, 'AddToCart']);
 Route::post('UpdateCart', [CartOrderPayment::class, 'UpdateCart']);
 Route::post('ViewAllCart', [CartOrderPayment::class, 'ViewAllCart']);
 Route::post('DeleteCart', [CartOrderPayment::class, 'DeleteCart']);
+
+Route::post('AddToOrder', [CartOrderPayment::class, 'AddToOrder']);
+Route::post('ViewAllOrder', [CartOrderPayment::class, 'ViewAllOrder']);
+Route::post('DetailedOrder', [CartOrderPayment::class, 'DetailedOrder']);
+
+
 
 
 });
