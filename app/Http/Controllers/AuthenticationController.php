@@ -9,12 +9,20 @@ use App\Mail\Authentication;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use App\Models\Security;
+use App\Http\Controllers\AuditTrialController;
 
 
 class AuthenticationController extends Controller
 {
 
+    protected $audit;
 
+
+    public function __construct(AuditTrialController $auditTrialController)
+    {
+        $this->audit = $auditTrialController;
+
+    }
 
 public function LogIn(Request $req)
     {

@@ -290,7 +290,7 @@ function DeleteUserRole(Request $req){
 
 function RoleAuthenticator($SenderId, $RoleFunction){
 
-    $RoleFunctionList = UserFunctions::where("UserId",$SenderId)->pluck('RoleFunction');
+    $RoleFunctionList = UserFunctions::where("UserId",$SenderId)->pluck('Function');
 
     // Check if the RoleFunctionList is empty
     if($RoleFunctionList->isEmpty()) {
@@ -508,6 +508,25 @@ function RateLimit($Ip)
 
      RateLimiter::hit($key, $decayMinutes * 60);
 }
+
+function ManualFreeze($Ip, $attempts, $minute)
+{
+
+    $key = $Ip;
+    $maxAttempts = $attempts;
+
+    $decayMinutes = $minute;
+
+
+    if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
+        $this->RateLimitTracker($Ip);
+        throw new ThrottleRequestsException('Unauthorized attempt detected. This activity is being logged and monitored.');
+    }
+
+     RateLimiter::hit($key, $decayMinutes * 60);
+}
+
+
 
 
     function TokenGenerator(): string {

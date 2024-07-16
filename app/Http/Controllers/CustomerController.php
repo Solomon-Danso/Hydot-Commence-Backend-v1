@@ -11,9 +11,19 @@ use Illuminate\Support\Facades\Config;
 use App\Mail\Registration;
 use Carbon\Carbon;
 
+
 class CustomerController extends Controller
 
 {
+
+    protected $audit;
+
+
+    public function __construct(AuditTrialController $auditTrialController)
+    {
+        $this->audit = $auditTrialController;
+
+    }
 
 
 public function CreateCustomer(Request $req)

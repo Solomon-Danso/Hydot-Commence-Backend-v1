@@ -66,7 +66,7 @@ public function SetUpCreateAdmin(Request $req)
 
         if ($s->save()) {
 
-            $role = new UserFunction();
+            $role = new UserFunctions();
             $role->UserId = $s->UserId;
             $role->Function = "SuperAdmin";
             $role->save();

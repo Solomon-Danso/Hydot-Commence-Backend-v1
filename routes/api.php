@@ -10,20 +10,20 @@ use App\Http\Controllers\AuthenticationController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerAuthenticationController;
 use App\Http\Controllers\MenuCategoryProduct;
-
+use App\Http\Middleware\CustomerAuthenticator;
+use App\Http\Controllers\CartOrderPayment;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
 
-Route::get('redirectToGateway', [PaymentController::class, 'redirectToGateway']);
-Route::get('makePayment', [PaymentController::class, 'makePayment']);
-Route::get('getPaymentData', [PaymentController::class, 'getPaymentData']);
-Route::get('getAllCustomers', [PaymentController::class, 'getAllCustomers']);
-Route::get('getAllTransactions', [PaymentController::class, 'getAllTransactions']);
+/**********************************************
+ *                                            *
+ *   🌐 GLOBAL ROUTES                        *
+ *                                            *
+ **********************************************/
 
-// Route for setting up the admin, accessible without authentication
 Route::post('SetUpCreateAdmin', [AdminUserController::class, 'SetUpCreateAdmin']);
 Route::post('LogIn', [AuthenticationController::class, 'LogIn']);
 Route::post('VerifyToken', [AuthenticationController::class, 'VerifyToken']);
@@ -31,7 +31,6 @@ Route::post('ForgetPasswordStep1', [AuthenticationController::class, 'ForgetPass
 Route::post('ForgetPasswordStep2', [AuthenticationController::class, 'ForgetPasswordStep2']);
 Route::post('Visitors', [AuditTrialController::class, 'Visitors']);
 Route::post('UnLocker', [AdminUserController::class, 'UnLocker']);
-
 Route::post('CustomerLogIn', [CustomerAuthenticationController::class, 'CustomerLogIn']);
 Route::post('CustomerVerifyToken', [CustomerAuthenticationController::class, 'CustomerVerifyToken']);
 Route::post('CustomerForgetPasswordStep1', [CustomerAuthenticationController::class, 'CustomerForgetPasswordStep1']);
@@ -42,17 +41,60 @@ Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
 Route::post('ViewProduct', [MenuCategoryProduct::class, 'ViewProduct']);
 Route::post('ViewSingleProduct', [MenuCategoryProduct::class, 'ViewSingleProduct']);
 Route::post('TestRateLimit', [MenuCategoryProduct::class, 'TestRateLimit']);
+Route::post('CreateCustomer', [CustomerController::class, 'CreateCustomer']);
+Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
+Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
 
 
+
+
+Route::middleware([CustomerAuthenticator::class])->group(function () {
+
+/**********************************************
+ *                                            *
+ *   💳 PAYMENT ROUTES                        *
+ *                                            *
+ **********************************************/
+Route::get('redirectToGateway', [PaymentController::class, 'redirectToGateway']);
+Route::get('makePayment', [PaymentController::class, 'makePayment']);
+Route::get('getPaymentData', [PaymentController::class, 'getPaymentData']);
+Route::get('getAllCustomers', [PaymentController::class, 'getAllCustomers']);
+Route::get('getAllTransactions', [PaymentController::class, 'getAllTransactions']);
+
+/**********************************************
+ *                                            *
+ *   🧍 CUSTOMERS ROUTES                      *
+ *                                            *
+ **********************************************/
+Route::post('UpdateCustomer', [CustomerController::class, 'UpdateCustomer']);
+Route::post('ViewSingleCustomer', [CustomerController::class, 'ViewSingleCustomer']);
+Route::post('AddToCart', [CartOrderPayment::class, 'AddToCart']);
+Route::post('UpdateCart', [CartOrderPayment::class, 'UpdateCart']);
+Route::post('ViewAllCart', [CartOrderPayment::class, 'ViewAllCart']);
+Route::post('DeleteCart', [CartOrderPayment::class, 'DeleteCart']);
+
+
+});
 
 
 
 // Routes that require authentication
 Route::middleware([ApiAuthenticator::class])->group(function () {
-    //Configurations
+
+/**********************************************
+ *                                            *
+ *   ⚙️ CONFIGURATIONS ROUTES                *
+ *                                            *
+ **********************************************/
     Route::post('RoleList', [AuditTrialController::class, 'RoleList']);
 
-    //Staff Members
+
+
+/**********************************************
+ *                                            *
+ *   🧑‍💼 STAFF MEMBERS ROUTES               *
+ *                                            *
+ **********************************************/
     Route::post('SuspendAdmin', [AdminUserController::class, 'SuspendAdmin']);
     Route::post('UnSuspendAdmin', [AdminUserController::class, 'UnSuspendAdmin']);
     Route::post('BlockAdmin', [AdminUserController::class, 'BlockAdmin']);
@@ -64,29 +106,31 @@ Route::middleware([ApiAuthenticator::class])->group(function () {
     Route::post('ViewAllAdmin', [AdminUserController::class, 'ViewAllAdmin']);
 
 
-    //Customers
-    Route::post('CreateCustomer', [CustomerController::class, 'CreateCustomer']);
-    Route::post('UpdateCustomer', [CustomerController::class, 'UpdateCustomer']);
-    Route::post('ViewSingleCustomer', [CustomerController::class, 'ViewSingleCustomer']);
+/**********************************************
+ *                                            *
+ *   🧍 CUSTOMERS ROUTES                      *
+ *                                            *
+ **********************************************/
     Route::post('DeleteCustomer', [CustomerController::class, 'DeleteCustomer']);
     Route::post('ViewAllCustomer', [CustomerController::class, 'ViewAllCustomer']);
 
-    //MenuCategoryProduct
+/**********************************************
+ *                                            *
+ *   📂 MENU CATEGORY PRODUCT ROUTES          *
+ *                                            *
+ **********************************************/
+
     Route::post('CreateMenu', [MenuCategoryProduct::class, 'CreateMenu']);
-    Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
-    Route::post('DeleteMenu', [MenuCategoryProduct::class, 'DeleteMenu']);
+       Route::post('DeleteMenu', [MenuCategoryProduct::class, 'DeleteMenu']);
 
     Route::post('CreateCategory', [MenuCategoryProduct::class, 'CreateCategory']);
     Route::post('UpdateCategory', [MenuCategoryProduct::class, 'UpdateCategory']);
-    Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
     Route::post('ViewSingleCategory', [MenuCategoryProduct::class, 'ViewSingleCategory']);
     Route::post('DeleteCategory', [MenuCategoryProduct::class, 'DeleteCategory']);
 
     Route::post('CreateProduct', [MenuCategoryProduct::class, 'CreateProduct']);
     Route::post('UpdateProduct', [MenuCategoryProduct::class, 'UpdateProduct']);
-    Route::post('ViewProduct', [MenuCategoryProduct::class, 'ViewProduct']);
-    Route::post('ViewSingleProduct', [MenuCategoryProduct::class, 'ViewSingleProduct']);
-    Route::post('DeleteProduct', [MenuCategoryProduct::class, 'DeleteProduct']);
+       Route::post('DeleteProduct', [MenuCategoryProduct::class, 'DeleteProduct']);
 
 
 
