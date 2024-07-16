@@ -44,6 +44,7 @@ Route::post('TestRateLimit', [MenuCategoryProduct::class, 'TestRateLimit']);
 Route::post('CreateCustomer', [CustomerController::class, 'CreateCustomer']);
 Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
 Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
+Route::get('makePayment', [PaymentController::class, 'makePayment']);
 
 
 
@@ -56,7 +57,6 @@ Route::middleware([CustomerAuthenticator::class])->group(function () {
  *                                            *
  **********************************************/
 Route::get('redirectToGateway', [PaymentController::class, 'redirectToGateway']);
-Route::get('makePayment', [PaymentController::class, 'makePayment']);
 Route::get('getPaymentData', [PaymentController::class, 'getPaymentData']);
 Route::get('getAllCustomers', [PaymentController::class, 'getAllCustomers']);
 Route::get('getAllTransactions', [PaymentController::class, 'getAllTransactions']);

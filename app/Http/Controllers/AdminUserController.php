@@ -25,11 +25,6 @@ class AdminUserController extends Controller
     }
 
 
-public function Test(){
-    $this->audit->RateLimit($req->ip());
-    return "Api is working succcessfully";
-}
-
 
 public function SetUpCreateAdmin(Request $req)
     {

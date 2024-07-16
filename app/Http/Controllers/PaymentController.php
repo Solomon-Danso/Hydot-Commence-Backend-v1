@@ -62,7 +62,7 @@ class PaymentController extends Controller
 
         // Step 5: Prepare data for Paystack authorization URL
         $paystackData = [
-            "amount" => 300*100, 
+            "amount" => 300*100,
             "reference" => $tref,
             "email" => 'solomon@gmail.com',
             "currency" => "GHS",

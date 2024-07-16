@@ -263,30 +263,6 @@ function ViewUserFunctions(Request $req){
     return $role;
 }
 
-function DeleteUserRole(Request $req){
-    $this->RoleAuthenticator($req->AdminId, "Can_Delete_Role");
-    $role = UserFunctions::where("UserId", $req->UserId)->where("Function", $req->Function)->first();
-    if($role==null){
-        return response()->json(["message"=>"Staff member is not assigned to this role"],400);
-    }
-
-    $saver = $role->delete();
-    if($saver){
-        $message =  $s->Function." function was deleted from ".$staff->Username."'s functions";
-        $message2 =  $s->Function." function has been deleted from ".$staff->Username."'s functions";
-
-        $this->Auditor($req->AdminId, $message);
-
-        return response()->json(["message"=>$message2],200);
-       }
-       else{
-        return response()->json(["message"=>"Could not delete"],400);
-       }
-
-
-
-}
-
 
 function RoleAuthenticator($SenderId, $RoleFunction){
 
@@ -453,7 +429,7 @@ public function RateLimitTracker($Ip) {
 
 
 function RoleList(Request $req){
-    $this->audit->RateLimit($req->ip());
+    $this->RateLimit($req->ip());
 $RoleList = [
     "Can_Create_Role",
     "Can_View_Role",

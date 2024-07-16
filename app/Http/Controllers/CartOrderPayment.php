@@ -9,6 +9,8 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\MasterRepo;
+use App\Models\Payment;
+use Paystack;
 
 
 
@@ -236,6 +238,76 @@ class CartOrderPayment extends Controller
         return $s;
 
     }
+
+    function Payment($UserId, $OrderId){
+
+
+        $order = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->first();
+        if(!$order){
+            return response()->json(["message"=>"Order does not exist"],400);
+        }
+
+        $r = Customer::where("UserId", $UserId)->first();
+        if(!$r){
+            return response()->json(["message"=>"Customer does not exist"],400);
+        }
+
+        $total = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->sum('Price');
+
+
+
+        $tref = Paystack::genTranxRef();
+
+        $s = new Payment();
+        $s->OrderId = $order->OrderId;
+        $s->ReferenceId = $tref;
+        $s->Phone = $r->Phone;
+        $s->Email = $r->Email;
+        $s->AmountPaid = $total;
+
+        $saver = $s->save();
+        if ($saver) {
+
+            $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', [
+                'tref' =>  $tref,
+                'ProductId' => "hdtCommerce",
+                'Product' => 'Hydot Commerce',
+                'Username' => $s->Phone,
+                'Amount' => $total,
+                'SuccessApi' => 'https://www.hydottech.com',//The Code to Execute if payment is successful
+                'CallbackURL' => 'http://localhost:3000/',//The redirect url to move the page to
+            ]);
+
+            // Handle the response if needed
+            if ($response->successful()) {
+
+
+                $paystackData = [
+                    "amount" => $total,
+                    "reference" => $tref,
+                    "email" => $r->Email,
+                    "currency" => "GHS",
+                    "orderID" => $order->OrderId,
+                    "phone" => $r->Phone,
+                ];
+
+                // Redirect to the Paystack authorization URL
+                return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
+
+
+            } else {
+                return response()->json(["message"=>"External Payment Api is down"],400);
+            }
+        }
+
+        else{
+            return response()->json(["message"=>"Failed to initialize payment"],400);
+        }
+
+
+    }
+
+
 
 
 
