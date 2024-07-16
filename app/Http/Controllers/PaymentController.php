@@ -90,8 +90,9 @@ class PaymentController extends Controller
     }
 
     public function getAllTransactions(){
+        $transactions =Paystack::getAllTransactions();
+       return $transactions;
 
-        return Paystack::getAllTransactions();
     }
 
 

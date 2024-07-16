@@ -250,6 +250,15 @@ class CartOrderPayment extends Controller
 
     public function Payment($UserId, $OrderId)
     {
+        $pay = Payment::where("UserId", $UserId)
+                ->where("OrderId", $OrderId)
+                ->where("Status", "confirmed")
+                ->first();
+
+        if ($pay) {
+            return response()->json(["message" => "Payment already completed, awaiting delivery"], 400);
+        }
+
         $order = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->first();
         if (!$order) {
             return response()->json(["message" => "Order does not exist"], 400);
@@ -258,6 +267,11 @@ class CartOrderPayment extends Controller
         $r = Customer::where("UserId", $UserId)->first();
         if (!$r) {
             return response()->json(["message" => "Customer does not exist"], 400);
+        }
+
+        $m = MasterRepo::where("OrderId", $OrderId)->first();
+        if (!$m) {
+            return response()->json(["message" => "Main Order does not exist"], 400);
         }
 
         $total = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->sum('Price');
@@ -273,21 +287,25 @@ class CartOrderPayment extends Controller
         $s->Phone = $r->Phone;
         $s->Email = $r->Email;
         $s->AmountPaid = $total;
+        $s->UserId = $UserId;
 
         $saver = $s->save();
         if ($saver) {
+            $m->PaymentId =  $s->ReferenceId;
+            $m->save();
+
             $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', [
                 'tref' =>  $tref,
                 'ProductId' => "hdtCommerce",
                 'Product' => 'Hydot Commerce',
                 'Username' => $s->Phone,
                 'Amount' => $total,
-                'SuccessApi' => 'https://www.hydottech.com',
+                //'SuccessApi' => 'http://127.0.0.1:8000/api/ConfirmPayment/'.$tref,
+                'SuccessApi' => 'https://hydottech.com',
                 'CallbackURL' => 'http://localhost:3000/',
             ]);
 
             if ($response->successful()) {
-                Log::info('Total Amount', ['total' => $total]);
 
                 $paystackData = [
                     "amount" => $totalInPesewas, // Amount in pesewas
@@ -305,6 +323,40 @@ class CartOrderPayment extends Controller
         } else {
             return response()->json(["message" => "Failed to initialize payment"], 400);
         }
+    }
+
+    function ConfirmPayment($RefId)
+    {
+        // Find the payment record in your local database
+        $a = Payment::where("ReferenceId", $RefId)->first();
+        if (!$a) {
+            return response()->json(["message" => "No Payment Found"], 400);
+        }
+
+        // Get all transactions from Paystack
+        $b = Paystack::getAllTransactions();
+        $transactions = $b; // Assuming getAllTransactions returns an array of transactions directly
+
+        $paymentFound = false;
+
+        // Check through the transactions to find the one that matches the reference ID and is successful
+        foreach ($transactions as $transaction) {
+            if ($transaction['reference'] === $RefId && $transaction['status'] === 'success') {
+                $paymentFound = true;
+                break;
+            }
+        }
+
+        if (!$paymentFound) {
+            return response()->json(["message" => "Invalid payment reference id"], 400);
+        }
+
+        // Additional logic if payment is found and confirmed
+        // For example, you might want to update the payment status in your local database
+        $a->status = 'confirmed';
+        $a->save();
+
+        return response()->json(["message" => "Payment confirmed successfully"], 200);
     }
 
 
