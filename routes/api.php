@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\ApiAuthenticator;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuditTrialController;
 use App\Http\Controllers\AuthenticationController;
@@ -12,6 +11,7 @@ use App\Http\Controllers\CustomerAuthenticationController;
 use App\Http\Controllers\MenuCategoryProduct;
 use App\Http\Middleware\CustomerAuthenticator;
 use App\Http\Controllers\CartOrderPayment;
+use App\Http\Controllers\BaggingCheckerDelivery;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -44,11 +44,11 @@ Route::post('TestRateLimit', [MenuCategoryProduct::class, 'TestRateLimit']);
 Route::post('CreateCustomer', [CustomerController::class, 'CreateCustomer']);
 Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
 Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
-Route::get('makePayment', [PaymentController::class, 'makePayment']);
 
-Route::get('payment/{UserId}/{OrderId}', [CartOrderPayment::class, 'Payment']);
-Route::get('getAllTransactions', [PaymentController::class, 'getAllTransactions']);
-Route::get('ConfirmPayment/{RefId}', [CartOrderPayment::class, 'ConfirmPayment']);
+
+
+
+
 
 
 Route::middleware([CustomerAuthenticator::class])->group(function () {
@@ -58,10 +58,9 @@ Route::middleware([CustomerAuthenticator::class])->group(function () {
  *   💳 PAYMENT ROUTES                        *
  *                                            *
  **********************************************/
-Route::get('redirectToGateway', [PaymentController::class, 'redirectToGateway']);
-Route::get('getPaymentData', [PaymentController::class, 'getPaymentData']);
-Route::get('getAllCustomers', [PaymentController::class, 'getAllCustomers']);
 
+Route::get('payment/{UserId}/{OrderId}', [CartOrderPayment::class, 'Payment']);
+Route::get('ConfirmPayment/{RefId}', [CartOrderPayment::class, 'ConfirmPayment']);
 
 /**********************************************
  *                                            *
@@ -96,6 +95,9 @@ Route::middleware([ApiAuthenticator::class])->group(function () {
  *                                            *
  **********************************************/
     Route::post('RoleList', [AuditTrialController::class, 'RoleList']);
+    Route::post('CreateUserRole', [AuditTrialController::class, 'CreateUserRole']);
+Route::post('ViewUserFunctions', [AuditTrialController::class, 'ViewUserFunctions']);
+Route::post('DeleteUserFunctions', [AuditTrialController::class, 'DeleteUserFunctions']);
 
 
 
@@ -139,9 +141,27 @@ Route::middleware([ApiAuthenticator::class])->group(function () {
 
     Route::post('CreateProduct', [MenuCategoryProduct::class, 'CreateProduct']);
     Route::post('UpdateProduct', [MenuCategoryProduct::class, 'UpdateProduct']);
-       Route::post('DeleteProduct', [MenuCategoryProduct::class, 'DeleteProduct']);
+    Route::post('DeleteProduct', [MenuCategoryProduct::class, 'DeleteProduct']);
 
+/**********************************************
+ *                                            *
+ *   🛍️ BAGGING, ✅ CHECKER, 🚚 DELIVERY      *
+ *                                            *
+ **********************************************/
 
+ Route::post('CheckBagging', [BaggingCheckerDelivery::class, 'CheckBagging']);
+ Route::post('ViewBaggingList', [BaggingCheckerDelivery::class, 'ViewBaggingList']);
+ Route::post('ViewConfirmedBaggingList', [BaggingCheckerDelivery::class, 'ViewConfirmedBaggingList']);
+ Route::post('CheckChecker', [BaggingCheckerDelivery::class, 'CheckChecker']);
+ Route::post('ViewCheckerList', [BaggingCheckerDelivery::class, 'ViewCheckerList']);
+ Route::post('ViewConfirmedCheckerList', [BaggingCheckerDelivery::class, 'ViewConfirmedCheckerList']);
+ Route::post('AssignForDelivery', [BaggingCheckerDelivery::class, 'AssignForDelivery']);
+ Route::post('ViewUnAssignedDelivery', [BaggingCheckerDelivery::class, 'ViewUnAssignedDelivery']);
+ Route::post('ViewAssignedDelivery', [BaggingCheckerDelivery::class, 'ViewAssignedDelivery']);
+ Route::post('ViewSingleOrdersToDeliver', [BaggingCheckerDelivery::class, 'ViewSingleOrdersToDeliver']);
+ Route::post('DeliverNow', [BaggingCheckerDelivery::class, 'DeliverNow']);
+ Route::post('ViewSingleDeliveredOrders', [BaggingCheckerDelivery::class, 'ViewSingleDeliveredOrders']);
+ Route::post('ViewDeliveredOrders', [BaggingCheckerDelivery::class, 'ViewDeliveredOrders']);
 
 
 

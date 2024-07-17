@@ -13,6 +13,7 @@ use App\Models\Payment;
 use Paystack;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\Bagging;
 
 
 
@@ -333,11 +334,17 @@ class CartOrderPayment extends Controller
             return response()->json(["message" => "No Payment Found"], 400);
         }
 
+
         // Get all transactions from Paystack
         $b = Paystack::getAllTransactions();
         $transactions = $b; // Assuming getAllTransactions returns an array of transactions directly
 
         $paymentFound = false;
+
+        $c = MasterRepo::where("PaymentId", $RefId)->first();
+        if (!$c) {
+            return response()->json(["message" => "No Payment Record Found"], 400);
+        }
 
         // Check through the transactions to find the one that matches the reference ID and is successful
         foreach ($transactions as $transaction) {
@@ -354,9 +361,26 @@ class CartOrderPayment extends Controller
         // Additional logic if payment is found and confirmed
         // For example, you might want to update the payment status in your local database
         $a->status = 'confirmed';
-        $a->save();
+       $saver= $a->save();
+       if($saver){
+        $b = new Bagging();
+        $b->MasterId = $c->MasterId;
+        $b->UserId = $c->UserId;
+        $b->OrderId = $c->OrderId;
+        $s->BaggingId = $this->IdGenerator();
+        $b->PaymentId = $c->PaymentId;
+        $b->save();
+
+        $c->BaggingId = $b->BaggingId;
+        $c->save();
 
         return response()->json(["message" => "Payment confirmed successfully"], 200);
+       }else{
+        return response()->json(["message" => "Payment confirmation failed"], 400);
+
+       }
+
+
     }
 
 

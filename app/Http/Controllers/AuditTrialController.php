@@ -248,6 +248,7 @@ function CreateUserRole(Request $req){
    $saver = $s->save();
    if($saver){
     $message =  $s->Function." function has been assigned to ".$staff->Username;
+    $this->Auditor($req->AdminId, $message);
     return response()->json(["message"=>$message],200);
    }
    else{
@@ -258,10 +259,27 @@ function CreateUserRole(Request $req){
 
 function ViewUserFunctions(Request $req){
     $this->RoleAuthenticator($req->AdminId, "Can_View_Role");
-
+    $this->Auditor($req->AdminId, "Viewed all user roles");
     $role = UserFunctions::where("UserId", $req->UserId)->get();
     return $role;
 }
+
+function DeleteUserFunctions(Request $req){
+    $this->RoleAuthenticator($req->AdminId, "Can_Delete_Role");
+
+    $role = UserFunctions::where("UserId", $req->UserId)->where("Function", $req->Function)->first();
+    $saver = $role->delete();
+    if($saver){
+        $this->Auditor($req->AdminId, $req->Function." deleted successfully");
+        return response()->json(["message"=>"User function deleted successfully"],200);
+    }else{
+        return response()->json(["message"=>"User function deletion failed"],400);
+    }
+
+}
+
+
+
 
 
 function RoleAuthenticator($SenderId, $RoleFunction){
@@ -451,7 +469,16 @@ $RoleList = [
     "Can_Delete_Category",
     "Can_Create_Product",
     "Can_Update_Product",
-    "Can_Delete_Product"
+    "Can_Delete_Product",
+    "Can_Access_Bagging",
+    "Can_View_Bagging",
+    "Can_Check_Bagging",
+    "Can_Check_Checking",
+    "Can_View_Checking",
+    "Can_Assign_Delivery",
+    "Can_Do_Delivery",
+    "Can_Track_Delivery",
+
 
 
 

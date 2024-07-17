@@ -178,7 +178,7 @@ protected function updateEnv($data = array())
 
     $s = AdminUser::where("UserId", $req->UserId)->first();
 
-    if($s==null){
+    if(!$s){
         return response()->json(["message"=>"Admin not found"],400);
     }
 
