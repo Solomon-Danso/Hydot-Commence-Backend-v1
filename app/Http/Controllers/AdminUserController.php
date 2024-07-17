@@ -162,7 +162,7 @@ protected function updateEnv($data = array())
             // And overwrite the .env with the new data
             file_put_contents(base_path() . '/.env', $env);
         }
-    }
+}
 
 
 
@@ -172,7 +172,7 @@ protected function updateEnv($data = array())
 
 
 
-   function UpdateAdmin(Request $req){
+function UpdateAdmin(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Admin");
 
@@ -229,7 +229,7 @@ protected function updateEnv($data = array())
 
 
 
-   }
+}
 
 
 function ViewSingleAdmin(Request $req){
@@ -382,7 +382,7 @@ function UnLocker(Request $req){
 
     $saver = $s->save();
     if($saver){
-        $message = $s->Username."  has been Unblocked";
+        $message = $s->Username."  has been Unlocked";
         $this->audit->Auditor($req->AdminId, $message);
         return response()->json(["message"=>$message],200);
     }
@@ -390,7 +390,7 @@ function UnLocker(Request $req){
         return response()->json(["message"=>"Failed to Unblock ".$s->Name],400);
     }
 
-   }
+}
 
 
 

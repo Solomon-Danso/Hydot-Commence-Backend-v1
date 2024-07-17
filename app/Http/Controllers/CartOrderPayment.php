@@ -63,6 +63,11 @@ class CartOrderPayment extends Controller
             $checker->Size = $req->Size;
             $saver = $checker->save();
             if($saver){
+
+                $message = $p->Title." was added to cart";
+                $this->audit->CustomerAuditor($req->UserId, $message);
+
+
                 return response()->json(["message"=>$checker->Title." added to cart successfully"],200);
             }else{
                 return response()->json(["message"=>"Failed to add ".$checker->Title." to cart"],400);
@@ -92,6 +97,9 @@ class CartOrderPayment extends Controller
 
             $saver = $s->save();
             if($saver){
+                $message = $p->Title." was added to cart";
+                $this->audit->CustomerAuditor($req->UserId, $message);
+
                 return response()->json(["message"=>$s->Title." added to cart successfully"],200);
             }else{
                 return response()->json(["message"=>"Failed to add ".$s->Title." to cart"],400);
@@ -131,6 +139,9 @@ class CartOrderPayment extends Controller
 
         $saver = $s->save();
         if($saver){
+            $message = $p->Title." was updated in cart";
+            $this->audit->CustomerAuditor($req->UserId, $message);
+
             return response()->json(["message"=>"Success"],200);
         }else{
             return response()->json(["message"=>"Failed"],400);
@@ -144,6 +155,9 @@ class CartOrderPayment extends Controller
         $this->audit->RateLimit($req->ip());
 
         $s = Cart::where("UserId", $req->UserId)->get();
+        $message = "Viewed all items in cart";
+        $this->audit->CustomerAuditor($req->UserId, $message);
+
 
         return $s;
     }
@@ -158,6 +172,9 @@ class CartOrderPayment extends Controller
 
         $saver = $s->delete();
         if($saver){
+            $message = $s->Title." was deleted from cart";
+            $this->audit->CustomerAuditor($req->UserId, $message);
+
             return response()->json(["message"=>"Deleted Successfully"],200);
         }else{
             return response()->json(["message"=>"Failed to Delete, Try Again"],400);
@@ -212,6 +229,9 @@ class CartOrderPayment extends Controller
         $m->OrderId = $OrderId;
         $m->save();
 
+        $message = "Placed an order with Id ".$OrderId;
+        $this->audit->CustomerAuditor($req->UserId, $message);
+
 
 
 
@@ -239,18 +259,140 @@ class CartOrderPayment extends Controller
           ->orderBy('created_at', 'desc')
           ->get();
 
+          $message = "Viewed all orders";
+          $this->audit->CustomerAuditor($req->UserId, $message);
+
+
         return $orders;
     }
 
     function DetailedOrder(Request $req){
         $this->audit->RateLimit($req->ip());
         $s = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->get();
+        $message = "Viewed details of the order ".$OrderId;
+        $this->audit->CustomerAuditor($req->UserId, $message);
+
         return $s;
 
     }
 
+    function EditProductInDetailedOrder(Request $req){
+        $this->audit->RateLimit($req->ip());
+        $s = Order::where("UserId", $req->UserId)->where("ProductId", $req->ProductId)->first();
+        if(!$s){
+            return response()->json(["message"=>"Invalid Product in your order"],400);
+        }
+
+        $b = Bagging::where("UserId", $req->UserId)->where("OrderId", $s->OrderId)->first();
+        if($b){
+            return response()->json(["message"=>$s->Title." has already been processed"],400);
+        }
+
+        $p = Product::where("ProductId", $req->ProductId)->first();
+        if(!$p){
+            return response()->json(["message"=>"Invalid Product in your order"],400);
+        }
+
+        if($req->Quantity > $p->Quantity){
+            return response()->json(["message" => "Your requested quantity exceeds the available stock."], 400);
+        }
+
+
+
+
+        if($req->filled("Quantity")){
+            $s->Quantity = $req->Quantity;
+        }
+
+        $saver = $s->save();
+        if($saver){
+            $message = $s->Title." quantity was updated in ".$s->OrderId;
+            $this->audit->CustomerAuditor($req->UserId, $message);
+
+            return response()->json(["message"=>$s->Title." quantity has been updated"],200);
+        }{
+            return response()->json(["message"=>"Failed to update quantity"],400);
+        }
+
+
+
+
+
+
+    }
+
+    function DeleteProductInDetailedOrder(Request $req){
+        $this->audit->RateLimit($req->ip());
+        $s = Order::where("UserId", $req->UserId)->where("ProductId", $req->ProductId)->first();
+        if(!$s){
+            return response()->json(["message"=>"Invalid Product in your order"],400);
+        }
+
+        $b = Bagging::where("UserId", $req->UserId)->where("OrderId", $s->OrderId)->first();
+        if($b){
+            return response()->json(["message"=>$s->Title." has already been processed"],400);
+        }
+
+
+        $saver = $s->delete();
+        if($saver){
+            $message = $s->Title." has been deleted in ".$s->OrderId;
+            $this->audit->CustomerAuditor($req->UserId, $message);
+
+            return response()->json(["message"=>$s->Title." has been removed successfully"],200);
+        }{
+            return response()->json(["message"=>"Failed to remove product"],400);
+        }
+
+
+
+
+
+
+    }
+
+
+
+
+
+    function Grammer($quantity){
+        if($quantity>1){
+            return "are";
+        }
+        else{
+            return "is";
+        }
+    }
+
+
+
+
+
     public function Payment($UserId, $OrderId)
     {
+
+        $orderList = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->get();
+
+        foreach($orderList as $o){
+            $product = Product::where("ProductId", $o->ProductId)->first();
+            if(!$product){
+                return response()->json(["message"=>"Invalid Product in your order"],400);
+            }
+
+
+            if($o->Quantity > $product->Quantity){
+                $message = "Current quantity in stock for ".$product->Title ." ". $this->Grammer($product->Quantity)." ".$product->Quantity;
+                return response()->json(["message"=>$message],400);
+
+            }
+
+
+        }
+
+
+
+
+
         $pay = Payment::where("UserId", $UserId)
                 ->where("OrderId", $OrderId)
                 ->where("Status", "confirmed")
@@ -276,6 +418,18 @@ class CartOrderPayment extends Controller
         }
 
         $total = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->sum('Price');
+
+
+
+
+
+
+
+
+
+
+
+
 
         // Ensure the total amount is an integer and in the smallest currency unit (e.g., kobo, pesewas)
         $totalInPesewas = intval($total * 100);
@@ -316,6 +470,10 @@ class CartOrderPayment extends Controller
                     "orderID" => $order->OrderId,
                     "phone" => $r->Phone,
                 ];
+
+                $message = "Initialized payment for the order with Id ".$order->OrderId;
+                $this->audit->CustomerAuditor($req->UserId, $message);
+
 
                 return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
             } else {
@@ -373,6 +531,25 @@ class CartOrderPayment extends Controller
 
         $c->BaggingId = $b->BaggingId;
         $c->save();
+
+        $orderList = Order::where("UserId", $c->UserId)->where("OrderId", $c->OrderId)->get();
+
+        foreach($orderList as $o){
+            $product = Product::where("ProductId", $o->ProductId)->first();
+            if(!$product){
+                return response()->json(["message"=>"Invalid Product in your order"],400);
+            }
+
+            $product->Quantity = $product->Quantity - $o->Quantity;
+            $product->save();
+
+        }
+
+
+
+
+        $message = "Confirmed payment for the order with Id ".$c->OrderId;
+        $this->audit->CustomerAuditor($c->UserId, $message);
 
         return response()->json(["message" => "Payment confirmed successfully"], 200);
        }else{

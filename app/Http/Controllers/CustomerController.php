@@ -104,6 +104,8 @@ function UpdateCustomer(Request $req){
 
     $saver = $s->save();
     if($saver){
+        $message = "Updated Profile";
+        $this->audit->CustomerAuditor($req->UserId, $message);
 
         return response()->json(["message" => "Updated "], 200);
 
@@ -124,6 +126,9 @@ function ViewSingleCustomer(Request $req){
     if($s==null){
         return response()->json(["message"=>"Customer not found"],400);
     }
+
+    $message = "Viewed Details";
+    $this->audit->CustomerAuditor($req->UserId, $message);
 
    return $s;
 }

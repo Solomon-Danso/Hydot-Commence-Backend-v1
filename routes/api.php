@@ -78,7 +78,8 @@ Route::post('DeleteCart', [CartOrderPayment::class, 'DeleteCart']);
 Route::post('AddToOrder', [CartOrderPayment::class, 'AddToOrder']);
 Route::post('ViewAllOrder', [CartOrderPayment::class, 'ViewAllOrder']);
 Route::post('DetailedOrder', [CartOrderPayment::class, 'DetailedOrder']);
-
+Route::post('EditProductInDetailedOrder', [CartOrderPayment::class, 'EditProductInDetailedOrder']);
+Route::post('DeleteProductInDetailedOrder', [CartOrderPayment::class, 'DeleteProductInDetailedOrder']);
 
 
 

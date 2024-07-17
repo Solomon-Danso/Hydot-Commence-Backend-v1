@@ -72,7 +72,8 @@ function CheckBagging(Request $req){
         $m->save();
 
 
-
+        $message = "The Order Id: ".$s->OrderId." was bagged";
+        $this->audit->Auditor($req->AdminId, $message);
 
 
 
@@ -88,6 +89,9 @@ function CheckBagging(Request $req){
 function ViewBaggingList(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Bagging");
+    $message = "Viewed Unconfirmed Bagging List";
+        $this->audit->Auditor($req->AdminId, $message);
+
     $s = Bagging::where("Status","!=","Bagged")->get();
     return $s;
 
@@ -96,6 +100,9 @@ function ViewBaggingList(Request $req){
 function ViewConfirmedBaggingList(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Bagging");
+
+    $message = "Viewed Confirmed Bagging List";
+    $this->audit->Auditor($req->AdminId, $message);
     $s = Bagging::where("Status","Bagged")->get();
     return $s;
 
@@ -156,6 +163,10 @@ function CheckChecker(Request $req){
         $m->DeliveryId =  $s->DeliveryId;
         $m->save();
 
+        $message = "The Order Id: ".$s->OrderId." was Checked";
+        $this->audit->Auditor($req->AdminId, $message);
+
+
 
 
 
@@ -171,6 +182,9 @@ function CheckChecker(Request $req){
 function ViewCheckerList(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Checking");
+    $message = "Viewed Unconfirmed Checked List";
+        $this->audit->Auditor($req->AdminId, $message);
+
     $s = Checker::where("Status","!=","Checked")->get();
     return $s;
 
@@ -178,6 +192,9 @@ function ViewCheckerList(Request $req){
 function ViewConfirmedCheckerList(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Checking");
+    $message = "Viewed Confirmed Checked List";
+        $this->audit->Auditor($req->AdminId, $message);
+
     $s = Checker::where("Status","Checked")->get();
     return $s;
 
@@ -226,6 +243,12 @@ function AssignForDelivery(Request $req){
 
       $n->save();
 
+      $message = "The Order Id: ".$s->OrderId." was Assigned For Delivery";
+      $this->audit->Auditor($req->AdminId, $message);
+
+
+
+
 
 
 
@@ -243,6 +266,9 @@ function ViewUnAssignedDelivery(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId,  "Can_Assign_Delivery");
     $s = Delivery::where("Status","!=","Assigned")->get();
+    $message = "Viewed UnAssigned Orders";
+        $this->audit->Auditor($req->AdminId, $message);
+
     return $s;
 
 }
@@ -251,6 +277,9 @@ function ViewAssignedDelivery(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId,  "Can_Assign_Delivery");
     $s = Delivery::where("Status","Assigned")->get();
+    $message = "Viewed Universal Assigned Orders";
+    $this->audit->Auditor($req->AdminId, $message);
+
     return $s;
 
 }
@@ -261,6 +290,9 @@ function ViewSingleOrdersToDeliver(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
     $s = Delivery::where("DAdminId",$req->AdminId)->where("Status","Assigned")->get();
+    $message = "Viewed Assigned Orders";
+    $this->audit->Auditor($req->AdminId, $message);
+
     return $s;
 
 }
@@ -289,6 +321,20 @@ function DeliverNow(Request $req){
 
 
 
+        
+
+
+
+
+
+
+
+        $message = "The Order Id: ".$req->OrderId." was successfully delivered";
+    $this->audit->Auditor($req->AdminId, $message);
+
+
+    return response()->json(["message" => "Order Delivered Successfully"], 400);
+
 
     }
     else{
@@ -305,6 +351,10 @@ function ViewSingleDeliveredOrders(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
     $s = Delivery::where("DAdminId",$req->AdminId)->where("Status","Delivered")->get();
+
+    $message = "Viewed Delivered Orders ";
+    $this->audit->Auditor($req->AdminId, $message);
+
     return $s;
 
 }
@@ -314,6 +364,8 @@ function ViewDeliveredOrders(Request $req){
     $this->audit->RateLimit($req->ip());
     $this->audit->RoleAuthenticator($req->AdminId,  "Can_Track_Delivery");
     $s = Delivery::where("Status","Delivered")->get();
+    $message = "Viewed Universal Delivered Orders ";
+    $this->audit->Auditor($req->AdminId, $message);
     return $s;
 
 }

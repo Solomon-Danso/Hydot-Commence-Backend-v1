@@ -13,6 +13,8 @@ use App\Models\UserFunctions;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use App\Models\RateLimitCatcher;
+use App\Models\Customer;
+
 
 
 class AuditTrialController extends Controller
@@ -137,7 +139,7 @@ function CustomerAuditor($UserId, $Action) {
     // URL path
     $urlPath = $_SERVER['REQUEST_URI'];
 
-    $stu = AdminUser::where('UserId', $UserId)->first();
+    $stu = Customer::where('UserId', $UserId)->first();
 
     $googleMapsLink = $latitude && $longitude ? "https://maps.google.com/?q={$latitude},{$longitude}" : '';
 

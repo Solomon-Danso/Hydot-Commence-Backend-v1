@@ -1,8 +1,8 @@
 Todo 
 [1]: Middleware to control customer authentication [Done]
-[2]: Audit Trails and all other security related operations
-[3]: Controller for Confirmations of Order, Bagging, Checker, Payment and Delivery
-[4]: Inventory management and other management related operations
+[2]: Audit Trails and all other security related operations [Done]
+[3]: Controller for Confirmations of Order, Bagging, Checker, Payment and Delivery [Done]
+[4]: Inventory management and other management related operations [Done]
 
 Payment Url is 127.0.0.1:8000/api/payment/93450514/22482565
 Format is 'payment/{UserId}/{OrderId}'
