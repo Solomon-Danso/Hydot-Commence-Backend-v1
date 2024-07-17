@@ -305,7 +305,7 @@ function UpdateProduct(Request $req){
 
 function ViewProduct(Request $req){
     $this->audit->RateLimit($req->ip());
-    $s = Product::get();
+    $s = Product::where("Quantity",">",0)->get();
     return $s;
 }
 
@@ -318,6 +318,14 @@ function TestRateLimit(Request $req){
 function ViewSingleProduct(Request $req){
     $this->audit->RateLimit($req->ip());
     $s = Product::where("ProductId",$req->ProductId)->first();
+
+    $s->ViewsCounter = $s->ViewsCounter+1;
+    $s->save();
+
+    $this->audit->ProductAssessment($req->ProductId, "Viewed Product");
+
+
+
     return response()->json(["message"=>$s],200);
 
 }

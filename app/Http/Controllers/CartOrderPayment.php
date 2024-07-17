@@ -541,6 +541,7 @@ class CartOrderPayment extends Controller
             }
 
             $product->Quantity = $product->Quantity - $o->Quantity;
+            $product->PurchaseCounter = $product->PurchaseCounter+1;
             $product->save();
 
         }

@@ -15,5 +15,8 @@ example is [https://hydcapi.hydottech.com/api/ExecuteWhenPaymentIsDone]
 Callback url will just be a normal frontend url 
 example is [https://hydotcommerce.hydottech.com]
 
-
-
+[Thursday] = Prepare [Admin Panel Ui to Accept Api]
+[Friday] = Integrate API to Website and Admin Panel
+[Saturday] = Test all endpoint and deploy on the server 
+[Sunday] = Prepare Documentation and User Manual 
+[Monday] = Launch On Monday and Start Making Money
