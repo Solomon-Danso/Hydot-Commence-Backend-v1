@@ -12,6 +12,8 @@ use App\Http\Controllers\MenuCategoryProduct;
 use App\Http\Middleware\CustomerAuthenticator;
 use App\Http\Controllers\CartOrderPayment;
 use App\Http\Controllers\BaggingCheckerDelivery;
+use App\Http\Controllers\Master;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -99,6 +101,13 @@ Route::middleware([ApiAuthenticator::class])->group(function () {
     Route::post('CreateUserRole', [AuditTrialController::class, 'CreateUserRole']);
 Route::post('ViewUserFunctions', [AuditTrialController::class, 'ViewUserFunctions']);
 Route::post('DeleteUserFunctions', [AuditTrialController::class, 'DeleteUserFunctions']);
+Route::post('ViewAllPayment', [CartOrderPayment::class, 'ViewAllPayment']);
+Route::post('ViewAuditTrail', [Master::class, 'ViewAuditTrail']);
+Route::post('ViewCustomerTrail', [Master::class, 'ViewCustomerTrail']);
+Route::post('ViewProductAssessment', [Master::class, 'ViewProductAssessment']);
+Route::post('ViewRateLimitCatcher', [Master::class, 'ViewRateLimitCatcher']);
+Route::post('ViewMasterRepo', [Master::class, 'ViewMasterRepo']);
+
 
 
 

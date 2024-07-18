@@ -210,10 +210,16 @@ function CreateProduct(Request $req){
 
     $s->MenuId = $m->MenuId;
     $s->CategoryId = $c->CategoryId;
-    $s->ProductId = $this->IdGenerator();
+
 
     if($req->hasFile("Picture")){
         $s->Picture = $req->file("Picture")->store("","public");
+    }
+
+    if($req->filled("ProductId")){
+        $s->ProductId = $req->ProductId;
+    }else{
+        $s->ProductId = $this->IdGenerator();
     }
 
     if($req->filled("Title")){

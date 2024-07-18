@@ -450,7 +450,7 @@ public function RateLimitTracker($Ip) {
 
 function RoleList(Request $req){
     $this->RateLimit($req->ip());
-$RoleList = [
+  $RoleList = [
     "Can_Create_Role",
     "Can_View_Role",
     "Can_Delete_Role",
@@ -474,7 +474,6 @@ $RoleList = [
     "Can_Delete_Product",
     "Can_Access_Bagging",
     "Can_View_Bagging",
-    "Can_Check_Bagging",
     "Can_Check_Checking",
     "Can_View_Checking",
     "Can_Assign_Delivery",
@@ -487,6 +486,12 @@ $RoleList = [
     "Can_UnSuspend_Customer",
     "Can_View_All_Customer",
     "Can_Delete_Customer",
+    "Can_View_Payment",
+    "Can_View_Audit_Trail",
+    "Can_View_Customer_Trail",
+    "Can_View_Product_Assessment",
+    "Can_View_Rate_Limit_Catcher",
+    "Can_View_Master_Repo",
 
 
 
@@ -538,6 +543,10 @@ function ManualFreeze($Ip, $attempts, $minute)
 
      RateLimiter::hit($key, $decayMinutes * 60);
 }
+
+
+
+
 
 
 
