@@ -136,6 +136,10 @@ function ViewSingleCustomer(Request $req){
 
 
 function BlockCustomer(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_Block_Customer");
+
+
     $s = Customer::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -160,6 +164,9 @@ function BlockCustomer(Request $req){
 }
 
 function UnBlockCustomer(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_UnBlock_Customer");
+
     $s = Customer::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -186,6 +193,9 @@ function UnBlockCustomer(Request $req){
 
 
 function SuspendCustomer(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_Suspend_Customer");
+
     $s = Customer::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -210,6 +220,9 @@ function SuspendCustomer(Request $req){
 }
 
 function UnSuspendCustomer(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_UnSuspend_Customer");
+
     $s = Customer::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -240,6 +253,8 @@ function UnSuspendCustomer(Request $req){
 
 function ViewAllCustomer(Request $req) {
     $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_All_Customer");
+
     $s = Customer::get();
 
     if ($s->isEmpty()) {
@@ -259,6 +274,8 @@ function ViewAllCustomer(Request $req) {
 
 function DeleteCustomer(Request $req){
     $this->audit->RateLimit($req->ip());
+    $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Customer");
+
     $s = Customer::where("UserId", $req->UserId)->first();
 
     if($s==null){

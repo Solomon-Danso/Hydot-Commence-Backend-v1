@@ -125,8 +125,13 @@ Route::post('DeleteUserFunctions', [AuditTrialController::class, 'DeleteUserFunc
  **********************************************/
     Route::post('DeleteCustomer', [CustomerController::class, 'DeleteCustomer']);
     Route::post('ViewAllCustomer', [CustomerController::class, 'ViewAllCustomer']);
+    Route::post('BlockCustomer', [CustomerController::class, 'BlockCustomer']);
+    Route::post('UnBlockCustomer', [CustomerController::class, 'UnBlockCustomer']);
+    Route::post('SuspendCustomer', [CustomerController::class, 'SuspendCustomer']);
+    Route::post('UnSuspendCustomer', [CustomerController::class, 'UnSuspendCustomer']);
 
-/**********************************************
+
+    /**********************************************
  *                                            *
  *   📂 MENU CATEGORY PRODUCT ROUTES          *
  *                                            *

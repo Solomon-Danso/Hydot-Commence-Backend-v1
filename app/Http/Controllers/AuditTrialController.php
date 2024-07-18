@@ -480,6 +480,14 @@ $RoleList = [
     "Can_Assign_Delivery",
     "Can_Do_Delivery",
     "Can_Track_Delivery",
+    "Can_Access_Dashboard",
+    "Can_Block_Customer",
+    "Can_UnBlock_Customer",
+    "Can_Suspend_Customer",
+    "Can_UnSuspend_Customer",
+    "Can_View_All_Customer",
+    "Can_Delete_Customer",
+
 
 
 
