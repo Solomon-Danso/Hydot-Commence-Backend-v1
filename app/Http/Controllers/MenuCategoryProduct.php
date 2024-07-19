@@ -23,8 +23,10 @@ class MenuCategoryProduct extends Controller
 
 function CreateMenu(Request $req){
     $this->audit->RateLimit($req->ip());
-        $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Menu");
-
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Menu");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
         $s = new Menu();
         $s->MenuId = $this->IdGenerator();
 
@@ -55,8 +57,10 @@ function ViewMenu(Request $req){
 
 function DeleteMenu(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Menu");
-
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Menu");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
     $s = Menu::where("MenuId",$req->MenuId)->first();
     if($s==null){
         return response()->json(["message"=>"Menu not found"],400);
@@ -78,8 +82,12 @@ function DeleteMenu(Request $req){
 
 function CreateCategory(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Category");
-    $s = new Category();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Category");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = new Category();
 
     $s->CategoryId = $this->IdGenerator();
     if($req->hasFile("CategoryPicture")){
@@ -113,8 +121,12 @@ function CreateCategory(Request $req){
 function UpdateCategory(Request $req){
 
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Category");
-    $s = Category::where("CategoryId",$req->CategoryId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Category");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Category::where("CategoryId",$req->CategoryId)->first();
     if($s==null){
         return response()->json(["message"=>"Category does not exist"],400);
     }
@@ -154,8 +166,12 @@ function ViewCategory(Request $req){
 
 function ViewSingleCategory(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_A_Single_Category");
-    $s = Category::where("CategoryId",$req->CategoryId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_A_Single_Category");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Category::where("CategoryId",$req->CategoryId)->first();
     if($s==null){
         return response()->json(["message"=>"Category does not exist"],400);
     }
@@ -168,8 +184,12 @@ function ViewSingleCategory(Request $req){
 
 function DeleteCategory(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Category");
-    $s = Category::where("CategoryId",$req->CategoryId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Category");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Category::where("CategoryId",$req->CategoryId)->first();
     if($s==null){
         return response()->json(["message"=>"Category does not exist"],400);
     }
@@ -191,7 +211,10 @@ function DeleteCategory(Request $req){
 
 function CreateProduct(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Product");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Product");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $m = Menu::where("MenuId",$req->MenuId)->first();
     if($m==null){
@@ -260,8 +283,10 @@ function CreateProduct(Request $req){
 
 function UpdateProduct(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Product");
-
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Product");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $s = Product::where("ProductId",$req->ProductId)->first();
     if($s==null){
@@ -338,8 +363,12 @@ function ViewSingleProduct(Request $req){
 
 function DeleteProduct(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Product");
-    $s = Product::where("ProductId",$req->ProductId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Product");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Product::where("ProductId",$req->ProductId)->first();
     if($s==null){
         return response()->json(["message"=>"Product does not exist"],400);
     }

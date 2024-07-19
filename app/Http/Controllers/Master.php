@@ -26,8 +26,10 @@ class Master extends Controller
 
 function ViewAuditTrail(Request $req){
         $this->audit->RateLimit($req->ip());
-        $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Audit_Trail");
-
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Audit_Trail");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
             $pay = AuditTrial::get();
 
             return $pay;
@@ -36,8 +38,10 @@ function ViewAuditTrail(Request $req){
 
 function ViewCustomerTrail(Request $req){
         $this->audit->RateLimit($req->ip());
-        $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Customer_Trail");
-
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Customer_Trail");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
             $pay = CustomerTrail::get();
 
             return $pay;
@@ -46,8 +50,10 @@ function ViewCustomerTrail(Request $req){
 
 function ViewProductAssessment(Request $req){
         $this->audit->RateLimit($req->ip());
-        $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Product_Assessment");
-
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Product_Assessment");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
             $pay = ProductAssessment::get();
 
             return $pay;
@@ -56,8 +62,10 @@ function ViewProductAssessment(Request $req){
 
     function ViewRateLimitCatcher(Request $req){
         $this->audit->RateLimit($req->ip());
-        $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Rate_Limit_Catcher");
-
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Rate_Limit_Catcher");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
             $pay = RateLimitCatcher::get();
 
             return $pay;
@@ -66,8 +74,10 @@ function ViewProductAssessment(Request $req){
 
     function ViewMasterRepo(Request $req){
         $this->audit->RateLimit($req->ip());
-        $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Master_Repo");
-
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Master_Repo");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
             $pay = MasterRepo::get();
 
             return $pay;

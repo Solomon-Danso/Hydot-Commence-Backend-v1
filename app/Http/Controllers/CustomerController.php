@@ -137,8 +137,10 @@ function ViewSingleCustomer(Request $req){
 
 function BlockCustomer(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Block_Customer");
-
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Block_Customer");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $s = Customer::where("UserId", $req->UserId)->first();
 
@@ -165,7 +167,10 @@ function BlockCustomer(Request $req){
 
 function UnBlockCustomer(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_UnBlock_Customer");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_UnBlock_Customer");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $s = Customer::where("UserId", $req->UserId)->first();
 
@@ -194,7 +199,10 @@ function UnBlockCustomer(Request $req){
 
 function SuspendCustomer(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Suspend_Customer");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Suspend_Customer");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $s = Customer::where("UserId", $req->UserId)->first();
 
@@ -221,7 +229,10 @@ function SuspendCustomer(Request $req){
 
 function UnSuspendCustomer(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_UnSuspend_Customer");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_UnSuspend_Customer");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $s = Customer::where("UserId", $req->UserId)->first();
 
@@ -253,7 +264,10 @@ function UnSuspendCustomer(Request $req){
 
 function ViewAllCustomer(Request $req) {
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_All_Customer");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_All_Customer");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $s = Customer::get();
 
@@ -274,7 +288,10 @@ function ViewAllCustomer(Request $req) {
 
 function DeleteCustomer(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Customer");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Customer");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $s = Customer::where("UserId", $req->UserId)->first();
 

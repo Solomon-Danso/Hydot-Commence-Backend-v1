@@ -25,8 +25,10 @@ class BaggingCheckerDelivery extends Controller
 
 function CheckBagging(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Access_Bagging");
-
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Access_Bagging");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
     $a = AdminUser::where("UserId", $req->AdminId)->first();
 
     if(!$a){
@@ -88,8 +90,12 @@ function CheckBagging(Request $req){
 
 function ViewBaggingList(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Bagging");
-    $message = "Viewed Unconfirmed Bagging List";
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Bagging");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $message = "Viewed Unconfirmed Bagging List";
         $this->audit->Auditor($req->AdminId, $message);
 
     $s = Bagging::where("Status","!=","Bagged")->get();
@@ -99,7 +105,10 @@ function ViewBaggingList(Request $req){
 
 function ViewConfirmedBaggingList(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Bagging");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Bagging");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $message = "Viewed Confirmed Bagging List";
     $this->audit->Auditor($req->AdminId, $message);
@@ -114,7 +123,10 @@ function ViewConfirmedBaggingList(Request $req){
 
 function CheckChecker(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Check_Checking");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Check_Checking");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $a = AdminUser::where("UserId", $req->AdminId)->first();
 
@@ -181,8 +193,12 @@ function CheckChecker(Request $req){
 
 function ViewCheckerList(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Checking");
-    $message = "Viewed Unconfirmed Checked List";
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Checking");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $message = "Viewed Unconfirmed Checked List";
         $this->audit->Auditor($req->AdminId, $message);
 
     $s = Checker::where("Status","!=","Checked")->get();
@@ -191,8 +207,12 @@ function ViewCheckerList(Request $req){
 }
 function ViewConfirmedCheckerList(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Checking");
-    $message = "Viewed Confirmed Checked List";
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Checking");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $message = "Viewed Confirmed Checked List";
         $this->audit->Auditor($req->AdminId, $message);
 
     $s = Checker::where("Status","Checked")->get();
@@ -202,7 +222,10 @@ function ViewConfirmedCheckerList(Request $req){
 
 function AssignForDelivery(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Assign_Delivery");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Assign_Delivery");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
 
     $a = AdminUser::where("UserId", $req->UserId)->first();
 
@@ -264,8 +287,12 @@ function AssignForDelivery(Request $req){
 
 function ViewUnAssignedDelivery(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId,  "Can_Assign_Delivery");
-    $s = Delivery::where("Status","!=","Assigned")->get();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId,  "Can_Assign_Delivery");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Delivery::where("Status","!=","Assigned")->get();
     $message = "Viewed UnAssigned Orders";
         $this->audit->Auditor($req->AdminId, $message);
 
@@ -275,8 +302,12 @@ function ViewUnAssignedDelivery(Request $req){
 
 function ViewAssignedDelivery(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId,  "Can_Assign_Delivery");
-    $s = Delivery::where("Status","Assigned")->get();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId,  "Can_Assign_Delivery");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Delivery::where("Status","Assigned")->get();
     $message = "Viewed Universal Assigned Orders";
     $this->audit->Auditor($req->AdminId, $message);
 
@@ -288,8 +319,12 @@ function ViewAssignedDelivery(Request $req){
 
 function ViewSingleOrdersToDeliver(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
-    $s = Delivery::where("DAdminId",$req->AdminId)->where("Status","Assigned")->get();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Delivery::where("DAdminId",$req->AdminId)->where("Status","Assigned")->get();
     $message = "Viewed Assigned Orders";
     $this->audit->Auditor($req->AdminId, $message);
 
@@ -300,8 +335,12 @@ function ViewSingleOrdersToDeliver(Request $req){
 function DeliverNow(Request $req){
 
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
-    $s = Delivery::where("OrderId",$req->OrderId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Delivery::where("OrderId",$req->OrderId)->first();
 
     $m = MasterRepo::where("OrderId",$req->OrderId)->first();
     if (!$m) {
@@ -321,7 +360,7 @@ function DeliverNow(Request $req){
 
 
 
-        
+
 
 
 
@@ -349,8 +388,12 @@ function DeliverNow(Request $req){
 
 function ViewSingleDeliveredOrders(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
-    $s = Delivery::where("DAdminId",$req->AdminId)->where("Status","Delivered")->get();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Delivery::where("DAdminId",$req->AdminId)->where("Status","Delivered")->get();
 
     $message = "Viewed Delivered Orders ";
     $this->audit->Auditor($req->AdminId, $message);
@@ -362,8 +405,12 @@ function ViewSingleDeliveredOrders(Request $req){
 
 function ViewDeliveredOrders(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId,  "Can_Track_Delivery");
-    $s = Delivery::where("Status","Delivered")->get();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId,  "Can_Track_Delivery");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = Delivery::where("Status","Delivered")->get();
     $message = "Viewed Universal Delivered Orders ";
     $this->audit->Auditor($req->AdminId, $message);
     return $s;

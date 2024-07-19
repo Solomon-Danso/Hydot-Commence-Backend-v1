@@ -230,12 +230,27 @@ function ProductAssessment($productId, $Action) {
 
 function CreateUserRole(Request $req){
 
-    $this->RoleAuthenticator($req->AdminId, "Can_Create_Role");
+    $rp = $this->RoleAuthenticator($req->AdminId, "Can_Create_Role");
+
+    if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
 
     $staff = AdminUser::where("UserId",$req->UserId)->first();
     if($staff==null){
         return response()->json(["message"=>"Staff does not exist"],400);
     }
+
+    $checker = UserFunctions::where("UserId",$req->UserId)->where("Function",$req->Function)->first();
+    if($checker){
+        $message =  $checker->Function." function has already been assigned to ".$staff->Username;
+    return response()->json(["message"=>$message],400);
+    }
+
+    if($req->Function=="SuperAdmin"){
+        return response()->json(["message"=>"Be very careful, Last Warning"],400);
+    }
+
 
     $s = new UserFunctions();
 
@@ -260,15 +275,17 @@ function CreateUserRole(Request $req){
 }
 
 function ViewUserFunctions(Request $req){
-    $this->RoleAuthenticator($req->AdminId, "Can_View_Role");
+
     $this->Auditor($req->AdminId, "Viewed all user roles");
     $role = UserFunctions::where("UserId", $req->UserId)->get();
     return $role;
 }
 
 function DeleteUserFunctions(Request $req){
-    $this->RoleAuthenticator($req->AdminId, "Can_Delete_Role");
-
+  $rp=  $this->RoleAuthenticator($req->AdminId, "Can_Delete_Role");
+    if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
     $role = UserFunctions::where("UserId", $req->UserId)->where("Function", $req->Function)->first();
     $saver = $role->delete();
     if($saver){
@@ -285,31 +302,35 @@ function DeleteUserFunctions(Request $req){
 
 
 function RoleAuthenticator($SenderId, $RoleFunction){
+    // Retrieve the list of roles assigned to the user
+    $RoleFunctionList = UserFunctions::where("UserId", $SenderId)->pluck('Function');
 
-    $RoleFunctionList = UserFunctions::where("UserId",$SenderId)->pluck('Function');
+    // Debug: Check the contents of $RoleFunctionList
+    \Log::info('RoleFunctionList for User ' . $SenderId . ':', ['roles' => $RoleFunctionList]);
 
-    // Check if the RoleFunctionList is empty
-    if($RoleFunctionList->isEmpty()) {
-        return response()->json(["message"=>"User does not have any roles assigned"],400);
-    }
 
     // Flag to track if SuperAdmin role is found
     $isSuperAdmin = false;
 
-    foreach($RoleFunctionList as $Role){
-        if($Role === "SuperAdmin"){
+    foreach ($RoleFunctionList as $Role) {
+        if ($Role === "SuperAdmin") {
             // If the user is SuperAdmin, set the flag to true and break the loop
             $isSuperAdmin = true;
             break;
         }
     }
 
+    // Debug: Check if the user is SuperAdmin
+    \Log::info('Is SuperAdmin:', ['isSuperAdmin' => $isSuperAdmin]);
+
     // If the user is not SuperAdmin and the specified role does not match any of the user's roles
     if (!$isSuperAdmin && !$RoleFunctionList->contains($RoleFunction)) {
-        return response()->json(["message"=>"User not authorised to perform this task"],400);
+        return response()->json(["message" => "User not authorised to perform this task"], 400);
     }
 
-    }
+    // If the user has the required role or is a SuperAdmin, proceed with the action
+    return response()->json(["message" => "User authorized"], 200);
+}
 
 
 
@@ -382,6 +403,11 @@ function RoleAuthenticator($SenderId, $RoleFunction){
     return response()->json(['success' => 'true'], 200);
 }
 
+
+
+
+
+
 public function RateLimitTracker($Ip) {
     $ipAddress = $Ip; // Get user's IP address
 
@@ -450,6 +476,12 @@ public function RateLimitTracker($Ip) {
 
 function RoleList(Request $req){
     $this->RateLimit($req->ip());
+    $rp= $this->RoleAuthenticator($req->AdminId, "Can_Select_Role");
+    if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+
+
   $RoleList = [
     "Can_Create_Role",
     "Can_View_Role",
@@ -492,6 +524,7 @@ function RoleList(Request $req){
     "Can_View_Product_Assessment",
     "Can_View_Rate_Limit_Catcher",
     "Can_View_Master_Repo",
+    "Can_Select_Role",
 
 
 
@@ -502,7 +535,9 @@ function RoleList(Request $req){
 ];
 
 sort($RoleList);
-return $RoleList;
+
+return response()->json(["message"=>$RoleList],200);
+
 
 }
 
@@ -514,7 +549,7 @@ function RateLimit($Ip)
 {
 
     $key = $Ip;
-    $maxAttempts = 10;
+    $maxAttempts = 20;
 
     $decayMinutes = 1;
 

@@ -563,8 +563,10 @@ class CartOrderPayment extends Controller
 
 function ViewAllPayment(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Payment");
-
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Payment");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
         $pay = Payment::orderBy("created_at","desc")->get();
 
         return $pay;

@@ -86,7 +86,14 @@ public function SetUpCreateAdmin(Request $req)
 public function CreateAdmin(Request $req)
     {
         $this->audit->RateLimit($req->ip());
-        $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Admin");
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Admin");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+        $checker = AdminUser::where("Email",$req->Email)->first();
+        if($checker){
+            return response()->json(["message" => "Email already exist"], 400);
+        }
 
         $s = new AdminUser();
 
@@ -112,8 +119,8 @@ public function CreateAdmin(Request $req)
 
 
 
-            $message = $s->Username."  was added as an administrator";
-            $message2 = $s->Username."  is added as an administrator";
+            $message = $s->Username."  was added as a staff member";
+            $message2 = $s->Username."  is added as a staff member";
             $this->audit->Auditor($req->AdminId, $message);
 
             try {
@@ -126,7 +133,7 @@ public function CreateAdmin(Request $req)
 
 
         }else{
-            return response()->json(["message" => "Could not add Admin"], 400);
+            return response()->json(["message" => "Could not add Staff member"], 400);
         }
 
 
@@ -174,8 +181,10 @@ protected function updateEnv($data = array())
 
 function UpdateAdmin(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Admin");
-
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Admin");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
     $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if(!$s){
@@ -234,8 +243,11 @@ function UpdateAdmin(Request $req){
 
 function ViewSingleAdmin(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Single_Admin");
-    $s = AdminUser::where("UserId", $req->UserId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Single_Admin");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+   $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){
         return response()->json(["message"=>"Admin not found"],400);
@@ -252,8 +264,13 @@ function ViewSingleAdmin(Request $req){
 
 function BlockAdmin(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Block_Admin");
-    $s = AdminUser::where("UserId", $req->UserId)->where('Role', '!=', 'SuperAdmin')->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Block_Admin");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+
+   $s = AdminUser::where("UserId", $req->UserId)->where('Role', '!=', 'SuperAdmin')->first();
 
     if($s==null){
         return response()->json(["message"=>"Admin not found"],400);
@@ -278,8 +295,12 @@ function BlockAdmin(Request $req){
 
 function UnBlockAdmin(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_UnBlock_Admin");
-    $s = AdminUser::where("UserId", $req->UserId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_UnBlock_Admin");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){
         return response()->json(["message"=>"Admin not found"],400);
@@ -306,8 +327,12 @@ function UnBlockAdmin(Request $req){
 
 function SuspendAdmin(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Suspend_Admin");
-    $s = AdminUser::where("UserId", $req->UserId)->where('Role', '!=', 'SuperAdmin')->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Suspend_Admin");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = AdminUser::where("UserId", $req->UserId)->where('Role', '!=', 'SuperAdmin')->first();
 
     if($s==null){
         return response()->json(["message"=>"Admin not found"],400);
@@ -332,8 +357,12 @@ function SuspendAdmin(Request $req){
 
 function UnSuspendAdmin(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_UnSuspend_Admin");
-    $s = AdminUser::where("UserId", $req->UserId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_UnSuspend_Admin");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){
         return response()->json(["message"=>"Admin not found"],400);
@@ -397,8 +426,12 @@ function UnLocker(Request $req){
 
 function ViewAllAdmin(Request $req) {
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_View_All_Admin");
-    $s = AdminUser::where('Role', '!=', 'SuperAdmin')->get();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_All_Admin");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = AdminUser::where('Role', '!=', 'SuperAdmin')->get();
 
     if ($s->isEmpty()) {
         return response()->json(['message' => 'Admin not found'], 400);
@@ -417,8 +450,12 @@ function ViewAllAdmin(Request $req) {
 
 function DeleteAdmin(Request $req){
     $this->audit->RateLimit($req->ip());
-    $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Admin");
-    $s = AdminUser::where("UserId", $req->UserId)->first();
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Admin");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+}
+
+   $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){
         return response()->json(["message"=>"Admin not found"],400);
