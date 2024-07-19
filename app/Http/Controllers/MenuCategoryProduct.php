@@ -85,7 +85,7 @@ function CreateCategory(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Category");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+    }
 
    $s = new Category();
 
@@ -124,7 +124,7 @@ function UpdateCategory(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Category");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
    $s = Category::where("CategoryId",$req->CategoryId)->first();
     if($s==null){
