@@ -185,7 +185,7 @@ function UpdateAdmin(Request $req){
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
 }
-    $s = AdminUser::where("UserId", $req->UserId)->first();
+    $s = AdminUser::where("UserId", $req->AdminId)->first();
 
     if(!$s){
         return response()->json(["message"=>"Admin not found"],400);
