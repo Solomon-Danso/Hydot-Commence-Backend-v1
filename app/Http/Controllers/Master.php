@@ -10,6 +10,13 @@ use App\Models\ProductAssessment;
 use App\Models\RateLimitCatcher;
 use App\Http\Controllers\AuditTrialController;
 use App\Models\MasterRepo;
+use App\Models\Customer;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\Bagging;
+use App\Models\Checker;
+
+
 
 class Master extends Controller
 {
@@ -22,6 +29,92 @@ class Master extends Controller
         $this->audit = $auditTrialController;
 
     }
+
+
+    function ViewMUsers(Request $req){
+        $this->audit->RateLimit($req->ip());
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Master");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+    $pay = Customer::where("UserId",$req->UserId)->first();
+
+    return $pay;
+
+    }
+
+    function ViewMOrder(Request $req){
+        $this->audit->RateLimit($req->ip());
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Master");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+    $pay = Order::where("OrderId",$req->OrderId)->first();
+
+    return $pay;
+
+    }
+
+    function ViewMBagging(Request $req){
+        $this->audit->RateLimit($req->ip());
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Master");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+    $pay = Bagging::where("BaggingId",$req->BaggingId)->first();
+
+    return $pay;
+
+    }
+
+    function ViewMChecker(Request $req){
+        $this->audit->RateLimit($req->ip());
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Master");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+    $pay = Checker::where("CheckerId",$req->CheckerId)->first();
+
+    return $pay;
+
+    }
+
+    function ViewMDelivery(Request $req){
+        $this->audit->RateLimit($req->ip());
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Master");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+    $pay = Delivery::where("DeliveryId",$req->DeliveryId)->first();
+
+    return $pay;
+
+    }
+
+    function ViewMPayment(Request $req){
+        $this->audit->RateLimit($req->ip());
+       $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Master");
+       if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+    $pay = Payment::where("PaymentId",$req->PaymentId)->first();
+
+    return $pay;
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function ViewAuditTrail(Request $req){

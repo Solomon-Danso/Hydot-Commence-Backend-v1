@@ -97,8 +97,8 @@ Route::middleware([ApiAuthenticator::class])->group(function () {
  *   ⚙️ CONFIGURATIONS ROUTES                *
  *                                            *
  **********************************************/
-    Route::post('RoleList', [AuditTrialController::class, 'RoleList']);
-    Route::post('CreateUserRole', [AuditTrialController::class, 'CreateUserRole']);
+Route::post('RoleList', [AuditTrialController::class, 'RoleList']);
+Route::post('CreateUserRole', [AuditTrialController::class, 'CreateUserRole']);
 Route::post('ViewUserFunctions', [AuditTrialController::class, 'ViewUserFunctions']);
 Route::post('DeleteUserFunctions', [AuditTrialController::class, 'DeleteUserFunctions']);
 Route::post('ViewAllPayment', [CartOrderPayment::class, 'ViewAllPayment']);
@@ -108,6 +108,12 @@ Route::post('ViewProductAssessment', [Master::class, 'ViewProductAssessment']);
 Route::post('ViewRateLimitCatcher', [Master::class, 'ViewRateLimitCatcher']);
 Route::post('ViewMasterRepo', [Master::class, 'ViewMasterRepo']);
 
+Route::post('ViewMUsers', [Master::class, 'ViewMUsers']);
+Route::post('ViewMOrder', [Master::class, 'ViewMOrder']);
+Route::post('ViewMBagging', [Master::class, 'ViewMBagging']);
+Route::post('ViewMChecker', [Master::class, 'ViewMChecker']);
+Route::post('ViewMDelivery', [Master::class, 'ViewMDelivery']);
+Route::post('ViewMPayment', [Master::class, 'ViewMPayment']);
 
 
 
