@@ -154,7 +154,7 @@ function CustomerAuditor($UserId, $Action) {
     $auditTrail->action = $Action ?? " ";
     $auditTrail->googlemap = $googleMapsLink ?? " ";
     $auditTrail->userId = $stu->UserId ?? " ";
-    $auditTrail->userName = $stu->Name;
+    $auditTrail->userName = $stu->Username ?? " ";;
 
     $auditTrail->save();
 }
@@ -305,9 +305,6 @@ function RoleAuthenticator($SenderId, $RoleFunction){
     // Retrieve the list of roles assigned to the user
     $RoleFunctionList = UserFunctions::where("UserId", $SenderId)->pluck('Function');
 
-    // Debug: Check the contents of $RoleFunctionList
-    \Log::info('RoleFunctionList for User ' . $SenderId . ':', ['roles' => $RoleFunctionList]);
-
 
     // Flag to track if SuperAdmin role is found
     $isSuperAdmin = false;
@@ -320,9 +317,7 @@ function RoleAuthenticator($SenderId, $RoleFunction){
         }
     }
 
-    // Debug: Check if the user is SuperAdmin
-    \Log::info('Is SuperAdmin:', ['isSuperAdmin' => $isSuperAdmin]);
-
+   
     // If the user is not SuperAdmin and the specified role does not match any of the user's roles
     if (!$isSuperAdmin && !$RoleFunctionList->contains($RoleFunction)) {
         return response()->json(["message" => "User not authorised to perform this task"], 400);

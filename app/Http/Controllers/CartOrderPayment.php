@@ -208,6 +208,7 @@ class CartOrderPayment extends Controller
             $s->Picture = $item->Picture;
             $s->Price = $item->Price;
             $s->Quantity = $item->Quantity;
+            $s->Title = $item->Title;
             $s->Size = $item->Size;
             $s->UserId = $item->UserId;
             $s->Country = $req->Country;
@@ -269,8 +270,18 @@ class CartOrderPayment extends Controller
     function DetailedOrder(Request $req){
         $this->audit->RateLimit($req->ip());
         $s = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->get();
-        $message = "Viewed details of the order ".$OrderId;
+        $message = "Viewed details of the order ".$req->OrderId;
         $this->audit->CustomerAuditor($req->UserId, $message);
+
+        return $s;
+
+    }
+
+    function DetailedAllOrder(Request $req){
+        $this->audit->RateLimit($req->ip());
+        $s = Order::where("OrderId", $req->OrderId)->get();
+        $message = "Viewed details of the order ".$req->OrderId;
+        $this->audit->Auditor($req->AdminId, $message);
 
         return $s;
 
@@ -471,8 +482,6 @@ class CartOrderPayment extends Controller
                     "phone" => $r->Phone,
                 ];
 
-                $message = "Initialized payment for the order with Id ".$order->OrderId;
-                $this->audit->CustomerAuditor($req->UserId, $message);
 
 
                 return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
@@ -525,7 +534,7 @@ class CartOrderPayment extends Controller
         $b->MasterId = $c->MasterId;
         $b->UserId = $c->UserId;
         $b->OrderId = $c->OrderId;
-        $s->BaggingId = $this->IdGenerator();
+        $b->BaggingId = $this->IdGenerator();
         $b->PaymentId = $c->PaymentId;
         $b->save();
 

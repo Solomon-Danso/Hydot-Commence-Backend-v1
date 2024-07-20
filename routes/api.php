@@ -47,6 +47,9 @@ Route::post('CreateCustomer', [CustomerController::class, 'CreateCustomer']);
 Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
 Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
 
+Route::get('payment/{UserId}/{OrderId}', [CartOrderPayment::class, 'Payment']);
+Route::get('ConfirmPayment/{RefId}', [CartOrderPayment::class, 'ConfirmPayment']);
+
 
 
 
@@ -60,9 +63,6 @@ Route::middleware([CustomerAuthenticator::class])->group(function () {
  *   💳 PAYMENT ROUTES                        *
  *                                            *
  **********************************************/
-
-Route::get('payment/{UserId}/{OrderId}', [CartOrderPayment::class, 'Payment']);
-Route::get('ConfirmPayment/{RefId}', [CartOrderPayment::class, 'ConfirmPayment']);
 
 /**********************************************
  *                                            *
@@ -178,6 +178,7 @@ Route::post('ViewMasterRepo', [Master::class, 'ViewMasterRepo']);
  Route::post('ViewSingleDeliveredOrders', [BaggingCheckerDelivery::class, 'ViewSingleDeliveredOrders']);
  Route::post('ViewDeliveredOrders', [BaggingCheckerDelivery::class, 'ViewDeliveredOrders']);
 
+ Route::post('DetailedAllOrder', [CartOrderPayment::class, 'DetailedAllOrder']);
 
 
 

@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Bagging;
-use Carbon;
+use Carbon\Carbon;
 use App\Http\Controllers\AuditTrialController;
 use App\Models\Checker;
 use App\Models\Delivery;
 use App\Models\Notification;
+use App\Models\AdminUser;
+use App\Models\MasterRepo;
 use Illuminate\Support\Facades\Hash;
 
 class BaggingCheckerDelivery extends Controller
@@ -28,7 +30,7 @@ function CheckBagging(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Access_Bagging");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
     $a = AdminUser::where("UserId", $req->AdminId)->first();
 
     if(!$a){
@@ -64,8 +66,8 @@ function CheckBagging(Request $req){
         $c->BaggingId = $s->BaggingId;
         $c->PaymentId = $s->PaymentId;
         $c->BAdminId = $s->UserId;
-        $c->BAdminName = $s->Username;
-        $c->BAdminPicture = $s->Picture;
+        $c->BAdminName = $s->BAdminName;
+        $c->BAdminPicture = $s->BAdminPicture;
         $c->BAdminDate = $s->BAdminDate;
         $c->CheckerId = $this->IdGenerator();
         $c->save();
@@ -98,7 +100,7 @@ function ViewBaggingList(Request $req){
    $message = "Viewed Unconfirmed Bagging List";
         $this->audit->Auditor($req->AdminId, $message);
 
-    $s = Bagging::where("Status","!=","Bagged")->get();
+    $s = Bagging::where("Status",null)->get();
     return $s;
 
 }
@@ -162,13 +164,13 @@ function CheckChecker(Request $req){
         $d->BaggingId = $s->BaggingId;
         $d->PaymentId = $s->PaymentId;
         $d->BAdminId = $s->UserId;
-        $d->BAdminName = $s->Username;
-        $d->BAdminPicture = $s->Picture;
+        $d->BAdminName = $s->BAdminName;
+        $d->BAdminPicture = $s->BAdminPicture;
         $d->BAdminDate = $s->BAdminDate;
         $d->CheckerId = $s->CheckerId;
-        $d->CAdminId = $s->UserId;
-        $d->CAdminName = $s->Username;
-        $d->CAdminPicture = $s->Picture;
+        $d->CAdminId = $s->CAdminId;
+        $d->CAdminName = $s->CAdminName;
+        $d->CAdminPicture = $s->CAdminPicture;
         $d->CAdminDate = $s->CAdminDate;
         $d->save();
 
@@ -201,7 +203,7 @@ function ViewCheckerList(Request $req){
    $message = "Viewed Unconfirmed Checked List";
         $this->audit->Auditor($req->AdminId, $message);
 
-    $s = Checker::where("Status","!=","Checked")->get();
+    $s = Checker::where("Status",null)->get();
     return $s;
 
 }
