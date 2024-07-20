@@ -30,7 +30,7 @@ function ViewAuditTrail(Request $req){
        if ($rp->getStatusCode() !== 200) {
         return $rp;  // Return the authorization failure response
     }
-            $pay = AuditTrial::get();
+            $pay = AuditTrial::orderBy("created_at","desc")->get();
 
             return $pay;
 
@@ -42,7 +42,7 @@ function ViewCustomerTrail(Request $req){
        if ($rp->getStatusCode() !== 200) {
         return $rp;  // Return the authorization failure response
     }
-            $pay = CustomerTrail::get();
+            $pay = CustomerTrail::orderBy("created_at","desc")->get();
 
             return $pay;
     }
@@ -54,7 +54,7 @@ function ViewProductAssessment(Request $req){
        if ($rp->getStatusCode() !== 200) {
         return $rp;  // Return the authorization failure response
     }
-            $pay = ProductAssessment::get();
+            $pay = ProductAssessment::orderBy("created_at","desc")->get();
 
             return $pay;
 
@@ -66,7 +66,7 @@ function ViewProductAssessment(Request $req){
        if ($rp->getStatusCode() !== 200) {
         return $rp;  // Return the authorization failure response
     }
-            $pay = RateLimitCatcher::get();
+            $pay = RateLimitCatcher::orderBy("created_at","desc")->get();
 
             return $pay;
 

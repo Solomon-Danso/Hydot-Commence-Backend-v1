@@ -8,6 +8,7 @@ use App\Models\AuditTrial;
 use App\Models\Visitors;
 use App\Models\CustomerTrail;
 use App\Models\ProductAssessment;
+use App\Models\Product;
 use Illuminate\Support\Facades\Log;
 use App\Models\UserFunctions;
 use Illuminate\Support\Facades\RateLimiter;
@@ -184,7 +185,7 @@ function ProductAssessment($productId, $Action) {
             throw new \Exception('JSON decoding error: ' . json_last_error_msg());
         }
 
-        Log::info('The IP DETAILS:', (array)$ipDetails);
+       
 
         $country = $ipDetails->country ?? 'Unknown';
         $city = $ipDetails->city ?? 'Unknown';
@@ -192,8 +193,7 @@ function ProductAssessment($productId, $Action) {
         $latitude = $location ? explode(',', $location)[0] : '';
         $longitude = $location ? explode(',', $location)[1] : '';
     } catch (\Exception $e) {
-        Log::error('Error in Auditor function: ' . $e->getMessage());
-        $country = $city = $latitude = $longitude = 'Unknown';
+               $country = $city = $latitude = $longitude = 'Unknown';
     }
 
     // Get user agent information
@@ -206,7 +206,7 @@ function ProductAssessment($productId, $Action) {
     // URL path
     $urlPath = $_SERVER['REQUEST_URI'];
 
-    $stu = ProductAssessment::where('productId', $productId)->first();
+    $stu = Product::where('ProductId', $productId)->first();
 
     $googleMapsLink = $latitude && $longitude ? "https://maps.google.com/?q={$latitude},{$longitude}" : '';
 
@@ -220,9 +220,9 @@ function ProductAssessment($productId, $Action) {
     $auditTrail->urlPath = $urlPath ?? " ";
     $auditTrail->action = $Action ?? " ";
     $auditTrail->googlemap = $googleMapsLink ?? " ";
-    $auditTrail->productId = $stu->productId ?? " ";
-    $auditTrail->productName = $stu->productName ?? " ";
-    $auditTrail->productPic = $stu->productPic ?? " ";
+    $auditTrail->productId = $stu->ProductId ?? " ";
+    $auditTrail->productName = $stu->Title ?? " ";
+    $auditTrail->productPic = $stu->Picture ?? " ";
 
     $auditTrail->save();
 }
@@ -317,7 +317,7 @@ function RoleAuthenticator($SenderId, $RoleFunction){
         }
     }
 
-   
+
     // If the user is not SuperAdmin and the specified role does not match any of the user's roles
     if (!$isSuperAdmin && !$RoleFunctionList->contains($RoleFunction)) {
         return response()->json(["message" => "User not authorised to perform this task"], 400);

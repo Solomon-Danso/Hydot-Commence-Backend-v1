@@ -179,6 +179,7 @@ Route::post('ViewMasterRepo', [Master::class, 'ViewMasterRepo']);
  Route::post('ViewDeliveredOrders', [BaggingCheckerDelivery::class, 'ViewDeliveredOrders']);
 
  Route::post('DetailedAllOrder', [CartOrderPayment::class, 'DetailedAllOrder']);
+ Route::post('ViewGlobalDelivery', [BaggingCheckerDelivery::class, 'ViewGlobalDelivery']);
 
 
 
