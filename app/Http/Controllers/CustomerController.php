@@ -190,7 +190,7 @@ function UnBlockCustomer(Request $req){
         return response()->json(["message"=>$message],200);
     }
     else{
-        return response()->json(["message"=>"Failed to Unblock ".$s->Name],400);
+        return response()->json(["message"=>"Failed to Unblock ".$s->Username],400);
     }
 
    }
@@ -252,7 +252,7 @@ function UnSuspendCustomer(Request $req){
         return response()->json(["message"=>$message],200);
     }
     else{
-        return response()->json(["message"=>"Failed to unsuspend ".$s->Name],400);
+        return response()->json(["message"=>"Failed to unsuspend ".$s->Username],400);
     }
 
 }
@@ -302,7 +302,7 @@ function DeleteCustomer(Request $req){
     $saver = $s->delete();
     if($saver){
 
-        $message = $s->Name."  details was deleted";
+        $message = $s->Username."  details was deleted";
         $this->audit->Auditor($req->AdminId, $message);
 
         return response()->json(["message"=>"Deleted Successfully"],200);

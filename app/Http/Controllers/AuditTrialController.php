@@ -185,7 +185,7 @@ function ProductAssessment($productId, $Action) {
             throw new \Exception('JSON decoding error: ' . json_last_error_msg());
         }
 
-       
+
 
         $country = $ipDetails->country ?? 'Unknown';
         $city = $ipDetails->city ?? 'Unknown';
@@ -520,6 +520,7 @@ function RoleList(Request $req){
     "Can_View_Rate_Limit_Catcher",
     "Can_View_Master_Repo",
     "Can_Select_Role",
+    "Can_Configure_Website",
 
 
 
@@ -544,7 +545,7 @@ function RateLimit($Ip)
 {
 
     $key = $Ip;
-    $maxAttempts = 20;
+    $maxAttempts = 60;
 
     $decayMinutes = 1;
 

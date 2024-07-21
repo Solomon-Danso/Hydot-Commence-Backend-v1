@@ -13,6 +13,10 @@ use App\Http\Middleware\CustomerAuthenticator;
 use App\Http\Controllers\CartOrderPayment;
 use App\Http\Controllers\BaggingCheckerDelivery;
 use App\Http\Controllers\Master;
+use App\Http\Controllers\DashBoard;
+use App\Http\Controllers\APPS;
+use App\Http\Controllers\WebsiteController;
+
 
 
 Route::get('/user', function (Request $request) {
@@ -40,17 +44,55 @@ Route::post('CustomerForgetPasswordStep2', [CustomerAuthenticationController::cl
 Route::post('RoleList', [AuditTrialController::class, 'RoleList']);
 Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
 Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
+
+
 Route::post('ViewProduct', [MenuCategoryProduct::class, 'ViewProduct']);
+Route::post('ViewCategoryProduct', [MenuCategoryProduct::class, 'ViewCategoryProduct']);
+
+
 Route::post('ViewSingleProduct', [MenuCategoryProduct::class, 'ViewSingleProduct']);
 Route::post('TestRateLimit', [MenuCategoryProduct::class, 'TestRateLimit']);
 Route::post('CreateCustomer', [CustomerController::class, 'CreateCustomer']);
 Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
+Route::post('ViewCategoryFrontend', [MenuCategoryProduct::class, 'ViewCategoryFrontend']);
 Route::post('ViewMenu', [MenuCategoryProduct::class, 'ViewMenu']);
 
 Route::get('payment/{UserId}/{OrderId}', [CartOrderPayment::class, 'Payment']);
 Route::get('ConfirmPayment/{RefId}', [CartOrderPayment::class, 'ConfirmPayment']);
 
 
+Route::post('ViewTotalSales', [DashBoard::class, 'ViewTotalSales']);
+Route::post('ViewTotalExpenses', [DashBoard::class, 'ViewTotalExpenses']);
+Route::post('ViewTotalYearlySales', [DashBoard::class, 'ViewTotalYearlySales']);
+Route::post('ViewMonthlySalesAndExpenses', [DashBoard::class, 'ViewMonthlySalesAndExpenses']);
+Route::post('ViewTotalSalesForCurrentMonth', [DashBoard::class, 'ViewTotalSalesForCurrentMonth']);
+Route::post('ThisYearSales', [DashBoard::class, 'ThisYearSales']);
+Route::post('TotalCustomers', [DashBoard::class, 'TotalCustomers']);
+Route::post('EarningData', [DashBoard::class, 'EarningData']);
+Route::post('RecentTransaction', [DashBoard::class, 'RecentTransaction']);
+Route::post('YearlyContinent', [DashBoard::class, 'YearlyContinent']);
+Route::post('WeeklyStats', [DashBoard::class, 'WeeklyStats']);
+Route::post('TopCustomers', [DashBoard::class, 'TopCustomers']);
+Route::post('TopTrendingPortfolio', [DashBoard::class, 'TopTrendingPortfolio']);
+Route::post('Auditing', [DashBoard::class, 'Auditing']);
+Route::post('GetVisitors', [DashBoard::class, 'GetVisitors']);
+Route::post('CountVisitors', [DashBoard::class, 'CountVisitors']);
+Route::post('CountCountryVisitors', [DashBoard::class, 'CountCountryVisitors']);
+
+
+
+Route::post('SendChat', [APPS::class, 'SendChat']);
+Route::post('CreateSchedular', [APPS::class, 'CreateSchedular']);
+Route::post('UpdateSchedular', [APPS::class, 'UpdateSchedular']);
+Route::post('DeleteSchedule', [APPS::class, 'DeleteSchedule']);
+Route::post('GetSchedule', [APPS::class, 'GetSchedule']);
+Route::post('ReplyTheChat', [APPS::class, 'ReplyTheChat']);
+Route::post('GetChat', [APPS::class, 'GetChat']);
+Route::post('GetOneEmail', [APPS::class, 'GetOneEmail']);
+Route::post('GetOneReply', [APPS::class, 'GetOneReply']);
+
+Route::get('GetWebsite', [WebsiteController::class, 'GetWebsite']);
+Route::post('ViewProductImage', [MenuCategoryProduct::class, 'ViewProductImage']);
 
 
 
@@ -114,6 +156,7 @@ Route::post('ViewMBagging', [Master::class, 'ViewMBagging']);
 Route::post('ViewMChecker', [Master::class, 'ViewMChecker']);
 Route::post('ViewMDelivery', [Master::class, 'ViewMDelivery']);
 Route::post('ViewMPayment', [Master::class, 'ViewMPayment']);
+Route::post('CreateWebsite', [WebsiteController::class, 'CreateWebsite']);
 
 
 
@@ -163,6 +206,12 @@ Route::post('ViewMPayment', [Master::class, 'ViewMPayment']);
     Route::post('CreateProduct', [MenuCategoryProduct::class, 'CreateProduct']);
     Route::post('UpdateProduct', [MenuCategoryProduct::class, 'UpdateProduct']);
     Route::post('DeleteProduct', [MenuCategoryProduct::class, 'DeleteProduct']);
+
+    Route::post('ProductImage', [MenuCategoryProduct::class, 'ProductImage']);
+    Route::post('DeleteProductImage', [MenuCategoryProduct::class, 'DeleteProductImage']);
+
+
+
 
 /**********************************************
  *                                            *

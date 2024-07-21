@@ -184,7 +184,7 @@ function UpdateAdmin(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Admin");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+    }
     $s = AdminUser::where("UserId", $req->AdminId)->first();
 
     if(!$s){
@@ -225,7 +225,7 @@ function UpdateAdmin(Request $req){
     $saver = $s->save();
     if($saver){
 
-        $message = $s->Name."  details was updated";
+        $message = $s->Username."  details was updated";
         $this->audit->Auditor($req->AdminId, $message);
 
 
@@ -253,7 +253,7 @@ function ViewSingleAdmin(Request $req){
         return response()->json(["message"=>"Admin not found"],400);
     }
 
-    $message = $s->Name."  details was viewed";
+    $message = $s->Username."  details was viewed";
     $this->audit->Auditor($req->AdminId, $message);
 
 
@@ -318,7 +318,7 @@ function UnBlockAdmin(Request $req){
         return response()->json(["message"=>$message],200);
     }
     else{
-        return response()->json(["message"=>"Failed to Unblock ".$s->Name],400);
+        return response()->json(["message"=>"Failed to Unblock ".$s->Username],400);
     }
 
    }
@@ -350,7 +350,7 @@ function SuspendAdmin(Request $req){
         return response()->json(["message"=>$message],200);
     }
     else{
-        return response()->json(["message"=>"Failed to suspend ".$s->Name],400);
+        return response()->json(["message"=>"Failed to suspend ".$s->Username],400);
     }
 
 }
@@ -380,7 +380,7 @@ function UnSuspendAdmin(Request $req){
         return response()->json(["message"=>$message],200);
     }
     else{
-        return response()->json(["message"=>"Failed to unsuspend ".$s->Name],400);
+        return response()->json(["message"=>"Failed to unsuspend ".$s->Username],400);
     }
 
 }
@@ -416,7 +416,7 @@ function UnLocker(Request $req){
         return response()->json(["message"=>$message],200);
     }
     else{
-        return response()->json(["message"=>"Failed to Unblock ".$s->Name],400);
+        return response()->json(["message"=>"Failed to Unblock ".$s->Username],400);
     }
 
 }
@@ -464,7 +464,7 @@ function DeleteAdmin(Request $req){
     $saver = $s->delete();
     if($saver){
 
-        $message = $s->Name."  details was deleted";
+        $message = $s->Username."  details was deleted";
         $this->audit->Auditor($req->AdminId, $message);
 
         return response()->json(["message"=>"Deleted Successfully"],200);

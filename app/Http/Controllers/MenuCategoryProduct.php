@@ -7,7 +7,7 @@ use App\Http\Controllers\AuditTrialController;
 use App\Models\Menu;
 use App\Models\Category;
 use App\Models\Product;
-
+use App\Models\ProductImages;
 
 class MenuCategoryProduct extends Controller
 {
@@ -158,11 +158,18 @@ function UpdateCategory(Request $req){
     }
 }
 
+function ViewCategoryFrontend(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $s = Category::where("Section", $req->Section)->get();
+    return $s;
+}
+
 function ViewCategory(Request $req){
     $this->audit->RateLimit($req->ip());
     $s = Category::get();
     return $s;
 }
+
 
 function ViewSingleCategory(Request $req){
     $this->audit->RateLimit($req->ip());
@@ -214,7 +221,7 @@ function CreateProduct(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Product");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
     $m = Menu::where("MenuId",$req->MenuId)->first();
     if($m==null){
@@ -269,6 +276,11 @@ function CreateProduct(Request $req){
 
     if($saver){
 
+        $p = new ProductImages();
+        $p->ProductId = $s->ProductId;
+        $p->Picture = $s->Picture;
+        $p->save();
+
         $message = "Product created successfully";
         $message2 = "Created ".$s->Title." product";
         $this->audit->Auditor($req->AdminId, $message2);
@@ -279,14 +291,98 @@ function CreateProduct(Request $req){
         return response()->json(["message"=>"Failed to create product"],400);
     }
 
+ }
+
+function ProductImage(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Create_Product");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+    }
+
+
+    $s = new ProductImages();
+
+
+    if($req->hasFile("Picture")){
+        $s->Picture = $req->file("Picture")->store("","public");
+    }
+
+    if($req->filled("ProductId")){
+        $s->ProductId = $req->ProductId;
+    }
+
+    if($req->filled("Size")){
+        $s->Size = $req->Size;
+    }
+
+    $saver = $s->save();
+
+    if($saver){
+
+        $message = "Added Images for product with Id:".$req->ProductId;
+
+        $this->audit->Auditor($req->AdminId, $message);
+
+        return response()->json(["message"=>$message],200);
+    }
+    else{
+        return response()->json(["message"=>"Failed to add image for this product"],400);
+    }
+
+
 }
+
+function ViewProductImage(Request $req){
+    $s = ProductImages::where("ProductId",$req->ProductId)->get();
+    if($s==null){
+        return response()->json(["message"=>"Product does not exist"],400);
+    }
+    return $s;
+}
+
+function DeleteProductImage(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Product");
+    if ($rp->getStatusCode() !== 200) {
+     return $rp;  // Return the authorization failure response
+  }
+
+
+    $s = ProductImages::where("id",$req->ProductId)->first();
+    if(!$s){
+        return response()->json(["message"=>"Product does not exist"],400);
+    }
+
+    $saver = $s->delete();
+
+    if($saver){
+
+        $message = "Deleted Images for product with Id:".$req->ProductId;
+
+        $this->audit->Auditor($req->AdminId, $message);
+
+        return response()->json(["message"=>$message],200);
+    }
+    else{
+        return response()->json(["message"=>"Failed to delete image for this product"],400);
+    }
+
+    return $s;
+}
+
+
+
+
 
 function UpdateProduct(Request $req){
     $this->audit->RateLimit($req->ip());
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Product");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
     $s = Product::where("ProductId",$req->ProductId)->first();
     if($s==null){
@@ -340,6 +436,15 @@ function ViewProduct(Request $req){
     return $s;
 }
 
+function ViewCategoryProduct(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $s = Product::where("Quantity",">",0)->where("CategoryId", $req->CategoryId)->get();
+    return $s;
+}
+
+
+
+
 function TestRateLimit(Request $req){
     $this->audit->RateLimit($req->ip());
     return "Test is good";
@@ -349,6 +454,9 @@ function TestRateLimit(Request $req){
 function ViewSingleProduct(Request $req){
     $this->audit->RateLimit($req->ip());
     $s = Product::where("ProductId",$req->ProductId)->first();
+    if(!$s){
+        return response()->json(["message"=>"Product not found"]);
+    }
 
     $s->ViewsCounter = $s->ViewsCounter+1;
     $s->save();
@@ -357,7 +465,7 @@ function ViewSingleProduct(Request $req){
 
 
 
-    return response()->json(["message"=>$s],200);
+    return $s;
 
 }
 
