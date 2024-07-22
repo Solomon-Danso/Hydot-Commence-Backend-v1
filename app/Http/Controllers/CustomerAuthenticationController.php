@@ -9,11 +9,20 @@ use App\Mail\Authentication;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use App\Models\Security;
+use App\Http\Controllers\AuditTrialController;
 
 
-class AuthenticationController extends Controller
+class CustomerAuthenticationController extends Controller
 {
 
+    protected $audit;
+
+
+    public function __construct(AuditTrialController $auditTrialController)
+    {
+        $this->audit = $auditTrialController;
+
+    }
 
 
 public function CustomerLogIn(Request $req)
@@ -21,6 +30,10 @@ public function CustomerLogIn(Request $req)
         $this->audit->RateLimit($req->ip());
         // Use your custom Authentication model to authenticate
         $user = Customer::where('Email', $req->Email)->first();
+        if(!$user){
+            return response()->json(['message' => 'Invalid Username'], 400);
+
+        }
         $user->TokenId = $this->IdGenerator();
         $user->TokenExpire = Carbon::now()->addMinutes(10);
         $user->save();

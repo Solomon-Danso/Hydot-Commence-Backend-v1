@@ -29,6 +29,9 @@ public function LogIn(Request $req)
         $this->audit->RateLimit($req->ip());
         // Use your custom Authentication model to authenticate
         $user = AdminUser::where('Email', $req->Email)->first();
+        if(!$user){
+            return response()->json(['message' => 'Invalid Username'], 400);
+        }
         $user->TokenId = $this->IdGenerator();
         $user->TokenExpire = Carbon::now()->addMinutes(10);
         $user->save();
