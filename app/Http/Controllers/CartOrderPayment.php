@@ -50,7 +50,7 @@ class CartOrderPayment extends Controller
 
 
 
-        $checker = Cart::where("ProductId", $req->ProductId)->where("UserId", $req->UserId)->first();
+        $checker = Cart::where("ProductId", $req->ProductId)->where("UserId", $req->UserId)->where("Size", $req->Size)->first();
         if($checker){
 
             $TotalQuantity = $checker->Quantity + $req->Quantity;
@@ -130,9 +130,16 @@ class CartOrderPayment extends Controller
             return response()->json(["message" => "Your requested quantity exceeds the available stock."], 400);
         }
 
+        if($req->filled("Quantity")){
+            $s->Quantity = $req->Quantity;
+        }
 
-        $s->Quantity = $req->Quantity;
-        $s->Size = $req->Size;
+        if($req->filled("Size")){
+            $s->Size = $req->Size;
+        }
+
+
+
 
 
 
