@@ -96,6 +96,8 @@ Route::post('GetOneReply', [APPS::class, 'GetOneReply']);
 Route::get('GetWebsite', [WebsiteController::class, 'GetWebsite']);
 Route::post('ViewProductImage', [MenuCategoryProduct::class, 'ViewProductImage']);
 
+Route::post('SearchProducts', [MenuCategoryProduct::class, 'SearchProducts']);
+
 
 
 

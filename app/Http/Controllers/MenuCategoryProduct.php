@@ -505,6 +505,19 @@ function DeleteProduct(Request $req){
 }
 
 
+public function SearchProducts(Request $req)
+{
+    $query = $req->input('query'); // Correct way to get input
+
+    $products = Product::where('Title', 'like', "%{$query}%")
+        ->orWhere('Description', 'like', "%{$query}%")
+        ->orWhere('Price', 'like', "%{$query}%")
+        ->get();
+
+    return response()->json($products);
+}
+
+
 
 
 function IdGenerator(): string {
