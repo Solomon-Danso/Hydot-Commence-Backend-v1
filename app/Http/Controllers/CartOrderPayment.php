@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Bagging;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\Notification;
 
 
 class CartOrderPayment extends Controller
@@ -687,6 +687,20 @@ function ViewAllPayment(Request $req){
 
 
  }
+
+function GetCustNotification(Request $req){
+    $this->audit->RateLimit($req->ip());
+
+    $n = Notification::where("UserId",$req->UserId)->orderBy("created_at","desc")->first();
+
+    if(!$n){
+        return response()->json(["message"=>" "],200);
+    }
+
+    return response()->json(["message"=>$n],200);
+
+}
+
 
 
 

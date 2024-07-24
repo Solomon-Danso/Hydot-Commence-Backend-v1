@@ -128,6 +128,7 @@ Route::post('DeleteProductInDetailedOrder', [CartOrderPayment::class, 'DeletePro
 
 Route::post('AddDeliveryDetails', [CartOrderPayment::class, 'AddDeliveryDetails']);
 Route::post('GetTotalPaymentAmount', [CartOrderPayment::class, 'GetTotalPaymentAmount']);
+Route::post('GetCustNotification', [CartOrderPayment::class, 'GetCustNotification']);
 
 
 

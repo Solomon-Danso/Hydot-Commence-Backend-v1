@@ -134,6 +134,22 @@ function ViewSingleCustomer(Request $req){
 }
 
 
+function AdminViewSingleCustomer(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $s = Customer::where("UserId", $req->UserId)->first();
+
+    if($s==null){
+        return response()->json(["message"=>"Customer not found"],400);
+    }
+
+    $message = "Viewed Details";
+    $this->audit->CustomerAuditor($req->UserId, $message);
+
+   return $s;
+}
+
+
+
 
 function BlockCustomer(Request $req){
     $this->audit->RateLimit($req->ip());
