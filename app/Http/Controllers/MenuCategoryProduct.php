@@ -55,6 +55,14 @@ function ViewMenu(Request $req){
     return $s;
 }
 
+function ViewMenuProduct(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $s = Product::where("Quantity",">",0)->where("MenuId",$req->MenuId)->get();
+    return $s;
+}
+
+
+
 function DeleteMenu(Request $req){
     $this->audit->RateLimit($req->ip());
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Menu");

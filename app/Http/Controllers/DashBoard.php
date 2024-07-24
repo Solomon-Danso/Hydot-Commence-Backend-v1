@@ -62,7 +62,7 @@ class DashBoard extends Controller
     function ViewMonthlySalesAndExpenses() {
         $currentYear = Carbon::now()->year;
         $monthlySales = DB::table('payments')
-            ->select(DB::raw('MONTH(updated_at) as month'), DB::raw('SUM(Amount) as total_sales'))
+            ->select(DB::raw('MONTH(updated_at) as month'), DB::raw('SUM(AmountPaid) as total_sales'))
             ->whereYear('updated_at', $currentYear)
             ->groupBy(DB::raw('MONTH(updated_at)'))
             ->get()
@@ -70,7 +70,7 @@ class DashBoard extends Controller
             ->toArray();
 
         $monthlyExpenses = DB::table('expenses')
-            ->select(DB::raw('MONTH(updated_at) as month'), DB::raw('SUM(Amount) as total_expenses'))
+            ->select(DB::raw('MONTH(updated_at) as month'), DB::raw('SUM(AmountPaid) as total_expenses'))
             ->whereYear('updated_at', $currentYear)
             ->groupBy(DB::raw('MONTH(updated_at)'))
             ->get()

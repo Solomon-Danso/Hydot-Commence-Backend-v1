@@ -357,20 +357,18 @@ class CartOrderPayment extends Controller
         if (!$dataList->isEmpty()) {
             foreach($dataList as $s){
 
-            $s->Country = $req->Country;
-            $s->Region = $req->Region;
-            $s->City = $req->City;
-            $s->DigitalAddress = $req->DigitalAddress;
-            $s->DetailedAddress = $req->DetailedAddress;
-            $s->OrderStatus = "awaiting payment";
-            $s->save();
+                $s->Country = $req->Country;
+                $s->Region = $req->Region;
+                $s->City = $req->City;
+                $s->DigitalAddress = $req->DigitalAddress;
+                $s->DetailedAddress = $req->DetailedAddress;
+                $s->OrderStatus = "awaiting payment";
+                $s->save();
 
             }
         } else {
             return response()->json(["message"=>"Order does not exist"],400);
         }
-
-
 
         $orderList = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->get();
 
@@ -380,14 +378,10 @@ class CartOrderPayment extends Controller
                 return response()->json(["message"=>"Invalid Product in your order"],400);
             }
 
-
             if($o->Quantity > $product->Quantity){
                 $message = "Current quantity in stock for ".$product->Title ." ". $this->Grammer($product->Quantity)." ".$product->Quantity;
                 return response()->json(["message"=>$message],400);
-
             }
-
-
         }
 
         $pay = Payment::where("UserId", $req->UserId)
@@ -395,23 +389,14 @@ class CartOrderPayment extends Controller
         ->where("Status", "confirmed")
         ->first();
 
-if ($pay) {
-    return response()->json(["message" => "Payment already completed, awaiting delivery"], 400);
-}
+        if ($pay) {
+            return response()->json(["message" => "Payment already completed, awaiting delivery"], 400);
+        }
 
-
-
-$m = MasterRepo::where("OrderId", $req->OrderId)->first();
-if (!$m) {
-    return response()->json(["message" => "Main Order does not exist"], 400);
-}
-
-
-
-
-
-
-
+        $m = MasterRepo::where("OrderId", $req->OrderId)->first();
+        if (!$m) {
+            return response()->json(["message" => "Main Order does not exist"], 400);
+        }
 
         $total = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->sum(DB::raw('Price * Quantity'));
 
@@ -419,11 +404,8 @@ if (!$m) {
         $tax = 0.01 * $total;
         $totalPay = $total + $shipping + $tax;
 
-        // Format the total amount to 2 decimal places
-        $formattedTotal = number_format($totalPay, 2, '.', ',');
-
-
-
+        // Format the total amount to 2 decimal places without commas
+        $formattedTotal = number_format($totalPay, 2, '.', '');
 
         $p = new Payment();
         $p->OrderId = $req->OrderId;
@@ -437,12 +419,7 @@ if (!$m) {
         $message = $req->OrderId." order has been placed";
         $this->audit->CustomerAuditor($req->UserId, $message);
 
-
-
-
-
-        return response()->json(["message"=>"Your location information has been sent"],200);
-
+        return response()->json(["message"=>"Your location information has been sent"], 200);
     }
 
 
@@ -657,6 +634,9 @@ if ($pay) {
             $product->Quantity = $product->Quantity - $o->Quantity;
             $product->PurchaseCounter = $product->PurchaseCounter+1;
             $product->save();
+
+            $o->OrderStatus = "awaiting shipment";
+            $o->save();
 
         }
 

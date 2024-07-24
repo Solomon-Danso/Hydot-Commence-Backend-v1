@@ -48,6 +48,7 @@ Route::post('ViewCategory', [MenuCategoryProduct::class, 'ViewCategory']);
 
 
 Route::post('ViewProduct', [MenuCategoryProduct::class, 'ViewProduct']);
+Route::post('ViewMenuProduct', [MenuCategoryProduct::class, 'ViewMenuProduct']);
 Route::post('ViewCategoryProduct', [MenuCategoryProduct::class, 'ViewCategoryProduct']);
 
 

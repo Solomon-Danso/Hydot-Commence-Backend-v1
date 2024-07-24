@@ -46,7 +46,7 @@ function Auditor($UserId, $Action) {
             throw new \Exception('JSON decoding error: ' . json_last_error_msg());
         }
 
-        Log::info('The IP DETAILS:', (array)$ipDetails);
+
 
         $country = $ipDetails->country ?? 'Unknown';
         $city = $ipDetails->city ?? 'Unknown';
@@ -118,7 +118,7 @@ function CustomerAuditor($UserId, $Action) {
             throw new \Exception('JSON decoding error: ' . json_last_error_msg());
         }
 
-        Log::info('The IP DETAILS:', (array)$ipDetails);
+
 
         $country = $ipDetails->country ?? 'Unknown';
         $city = $ipDetails->city ?? 'Unknown';
@@ -360,7 +360,7 @@ function RoleAuthenticator($SenderId, $RoleFunction){
             throw new \Exception('JSON decoding error: ' . json_last_error_msg());
         }
 
-        Log::info('The IP DETAILS:', (array)$ipDetails);
+
 
         $country = $ipDetails->country ?? 'Unknown';
         $city = $ipDetails->city ?? 'Unknown';
@@ -428,7 +428,7 @@ public function RateLimitTracker($Ip) {
             throw new \Exception('JSON decoding error: ' . json_last_error_msg());
         }
 
-        Log::info('The IP DETAILS:', (array)$ipDetails);
+       
 
         $country = $ipDetails->country ?? 'Unknown';
         $city = $ipDetails->city ?? 'Unknown';
