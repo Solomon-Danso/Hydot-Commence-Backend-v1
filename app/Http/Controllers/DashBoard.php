@@ -729,7 +729,7 @@ function Auditing() {
 }
 
 function GetVisitors(){
-    $v = Visitors::get();
+    $v = Visitors::orderBy("created_at","desc")->get();
     return response()->json(["visitors"=>$v],200);
 }
 

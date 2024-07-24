@@ -126,6 +126,11 @@ Route::post('DetailedOrder', [CartOrderPayment::class, 'DetailedOrder']);
 Route::post('EditProductInDetailedOrder', [CartOrderPayment::class, 'EditProductInDetailedOrder']);
 Route::post('DeleteProductInDetailedOrder', [CartOrderPayment::class, 'DeleteProductInDetailedOrder']);
 
+Route::post('AddDeliveryDetails', [CartOrderPayment::class, 'AddDeliveryDetails']);
+Route::post('GetTotalPaymentAmount', [CartOrderPayment::class, 'GetTotalPaymentAmount']);
+
+
+
 
 
 });

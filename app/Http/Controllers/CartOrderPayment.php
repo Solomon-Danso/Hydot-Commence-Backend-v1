@@ -14,6 +14,7 @@ use Paystack;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Bagging;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -223,7 +224,7 @@ class CartOrderPayment extends Controller
             $s->City = $req->City;
             $s->DigitalAddress = $req->DigitalAddress;
             $s->DetailedAddress = $req->DetailedAddress;
-            $s->OrderStatus= "awaiting shipment";
+            $s->OrderStatus= "pending order";
             $s->save();
 
             $c = Cart::where("CartId", $item->CartId)->first();
@@ -274,6 +275,8 @@ class CartOrderPayment extends Controller
         return $orders;
     }
 
+
+
     function DetailedOrder(Request $req){
         $this->audit->RateLimit($req->ip());
         $s = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->get();
@@ -315,7 +318,9 @@ class CartOrderPayment extends Controller
             return response()->json(["message" => "Your requested quantity exceeds the available stock."], 400);
         }
 
-
+        if($req->filled("Size")){
+            $s->Size = $req->Size;
+        }
 
 
         if($req->filled("Quantity")){
@@ -338,6 +343,108 @@ class CartOrderPayment extends Controller
 
 
     }
+
+
+    function AddDeliveryDetails(Request $req){
+        $this->audit->RateLimit($req->ip());
+        $r = Customer::where("UserId", $req->UserId)->first();
+        if (!$r) {
+            return response()->json(["message" => "Customer does not exist"], 400);
+        }
+        $dataList = Order::where("OrderId", $req->OrderId)->get();
+
+        // Check if the $dataList is not empty
+        if (!$dataList->isEmpty()) {
+            foreach($dataList as $s){
+
+            $s->Country = $req->Country;
+            $s->Region = $req->Region;
+            $s->City = $req->City;
+            $s->DigitalAddress = $req->DigitalAddress;
+            $s->DetailedAddress = $req->DetailedAddress;
+            $s->OrderStatus = "awaiting payment";
+            $s->save();
+
+            }
+        } else {
+            return response()->json(["message"=>"Order does not exist"],400);
+        }
+
+
+
+        $orderList = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->get();
+
+        foreach($orderList as $o){
+            $product = Product::where("ProductId", $o->ProductId)->first();
+            if(!$product){
+                return response()->json(["message"=>"Invalid Product in your order"],400);
+            }
+
+
+            if($o->Quantity > $product->Quantity){
+                $message = "Current quantity in stock for ".$product->Title ." ". $this->Grammer($product->Quantity)." ".$product->Quantity;
+                return response()->json(["message"=>$message],400);
+
+            }
+
+
+        }
+
+        $pay = Payment::where("UserId", $req->UserId)
+        ->where("OrderId", $req->OrderId)
+        ->where("Status", "confirmed")
+        ->first();
+
+if ($pay) {
+    return response()->json(["message" => "Payment already completed, awaiting delivery"], 400);
+}
+
+
+
+$m = MasterRepo::where("OrderId", $req->OrderId)->first();
+if (!$m) {
+    return response()->json(["message" => "Main Order does not exist"], 400);
+}
+
+
+
+
+
+
+
+
+        $total = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->sum(DB::raw('Price * Quantity'));
+
+        $shipping = 0.08 * $total;
+        $tax = 0.01 * $total;
+        $totalPay = $total + $shipping + $tax;
+
+        // Format the total amount to 2 decimal places
+        $formattedTotal = number_format($totalPay, 2, '.', ',');
+
+
+
+
+        $p = new Payment();
+        $p->OrderId = $req->OrderId;
+        $p->Phone = $r->Phone;
+        $p->Email = $r->Email;
+        $p->AmountPaid = $formattedTotal;
+        $p->UserId = $req->UserId;
+
+        $saver = $p->save();
+
+        $message = $req->OrderId." order has been placed";
+        $this->audit->CustomerAuditor($req->UserId, $message);
+
+
+
+
+
+        return response()->json(["message"=>"Your location information has been sent"],200);
+
+    }
+
 
     function DeleteProductInDetailedOrder(Request $req){
         $this->audit->RateLimit($req->ip());
@@ -383,84 +490,73 @@ class CartOrderPayment extends Controller
     }
 
 
+    function GetTotalPaymentAmount(Request $req)
+    {
+        // Rate limit based on IP address
+        $this->audit->RateLimit($req->ip());
+
+        // Retrieve the payment details
+        $s = Payment::where("UserId", $req->UserId)
+            ->where("OrderId", $req->OrderId)
+            ->first();
+
+        // If payment details are not available, return an error response
+        if (!$s) {
+            return response()->json(["message" => "Payment not available"], 400);
+        }
+
+        // Log the action
+        $message = $req->UserId . " viewed total payment amount for " . $req->OrderId;
+        $this->audit->CustomerAuditor($req->UserId, $message);
+
+        // Calculate shipping and tax
+        $shipping = 0.08 * $s->AmountPaid;
+        $tax = 0.01 * $s->AmountPaid;
+        $total = $s->AmountPaid + $shipping + $tax;
+
+        // Format the total amount to 2 decimal places
+        $formattedTotal = number_format($total, 2, '.', ',');
+
+        // Return the total payment amount in JSON response
+        return response()->json(["message" => $formattedTotal], 200);
+    }
+
 
 
 
     public function Payment($UserId, $OrderId)
     {
-
-        $orderList = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->get();
-
-        foreach($orderList as $o){
-            $product = Product::where("ProductId", $o->ProductId)->first();
-            if(!$product){
-                return response()->json(["message"=>"Invalid Product in your order"],400);
-            }
-
-
-            if($o->Quantity > $product->Quantity){
-                $message = "Current quantity in stock for ".$product->Title ." ". $this->Grammer($product->Quantity)." ".$product->Quantity;
-                return response()->json(["message"=>$message],400);
-
-            }
-
-
-        }
-
-
-
-
-
         $pay = Payment::where("UserId", $UserId)
-                ->where("OrderId", $OrderId)
-                ->where("Status", "confirmed")
-                ->first();
+        ->where("OrderId", $OrderId)
+        ->where("Status", "confirmed")
+        ->first();
 
-        if ($pay) {
-            return response()->json(["message" => "Payment already completed, awaiting delivery"], 400);
-        }
+if ($pay) {
+    return response()->json(["message" => "Payment already completed, awaiting delivery"], 400);
+}
 
-        $order = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->first();
-        if (!$order) {
-            return response()->json(["message" => "Order does not exist"], 400);
-        }
 
-        $r = Customer::where("UserId", $UserId)->first();
-        if (!$r) {
-            return response()->json(["message" => "Customer does not exist"], 400);
+        $s = Payment::where("UserId", $UserId)->where("OrderId", $OrderId)->first();
+        if(!$s){
+            return response()->json(["message"=>"Failed to initiate payment"],400);
         }
 
         $m = MasterRepo::where("OrderId", $OrderId)->first();
         if (!$m) {
-            return response()->json(["message" => "Main Order does not exist"], 400);
-        }
+         return response()->json(["message" => "Main Order does not exist"], 400);
+         }
 
-        $total = Order::where("UserId", $UserId)->where("OrderId", $OrderId)->sum('Price');
-
-
-
-
-
-
-
-
-
-
-
-
+         $shipping = 0.08 * $s->AmountPaid;
+         $tax = 0.01 * $s->AmountPaid;
+         $total = $s->AmountPaid + $shipping + $tax;
 
         // Ensure the total amount is an integer and in the smallest currency unit (e.g., kobo, pesewas)
         $totalInPesewas = intval($total * 100);
 
         $tref = Paystack::genTranxRef();
 
-        $s = new Payment();
-        $s->OrderId = $order->OrderId;
+
         $s->ReferenceId = $tref;
-        $s->Phone = $r->Phone;
-        $s->Email = $r->Email;
-        $s->AmountPaid = $total;
-        $s->UserId = $UserId;
 
         $saver = $s->save();
         if ($saver) {
@@ -475,7 +571,7 @@ class CartOrderPayment extends Controller
                 'Amount' => $total,
                 //'SuccessApi' => 'http://127.0.0.1:8000/api/ConfirmPayment/'.$tref,
                 'SuccessApi' => 'https://hydottech.com',
-                'CallbackURL' => 'http://localhost:3000/',
+                'CallbackURL' => 'http://localhost:3000/orders',
             ]);
 
             if ($response->successful()) {
@@ -483,10 +579,10 @@ class CartOrderPayment extends Controller
                 $paystackData = [
                     "amount" => $totalInPesewas, // Amount in pesewas
                     "reference" => $tref,
-                    "email" => $r->Email,
+                    "email" => $s->Email,
                     "currency" => "GHS",
-                    "orderID" => $order->OrderId,
-                    "phone" => $r->Phone,
+                    "orderID" => $s->OrderId,
+                    "phone" => $s->Phone,
                 ];
 
 
@@ -499,6 +595,8 @@ class CartOrderPayment extends Controller
             return response()->json(["message" => "Failed to initialize payment"], 400);
         }
     }
+
+
 
     function ConfirmPayment($RefId)
     {
