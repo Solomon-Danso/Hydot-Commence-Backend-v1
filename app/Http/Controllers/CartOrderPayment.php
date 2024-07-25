@@ -671,13 +671,13 @@ function ViewAllPayment(Request $req){
 function GetCustNotification(Request $req){
     $this->audit->RateLimit($req->ip());
 
-    $n = Notification::where("UserId",$req->UserId)->orderBy("created_at","desc")->first();
+    $n = Notification::where("UserId",$req->UserId)->orderBy("created_at","desc")->get();
 
     if(!$n){
         return response()->json(["message"=>" "],200);
     }
 
-    return response()->json(["message"=>$n],200);
+    return $n;
 
 }
 
