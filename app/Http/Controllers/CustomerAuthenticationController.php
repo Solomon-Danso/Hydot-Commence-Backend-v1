@@ -135,7 +135,7 @@ public function CustomerForgetPasswordStep1(Request $req)
                 if ($saver) {
                     // Send email if the request is successful
                     try {
-                        Mail::to($user->Email)->send(new Authentication( $user->Token));
+                        Mail::to($user->Email)->send(new Authentication( $user->TokenId));
                         return response()->json(['message' => "A verification token has been sent to ".$user->Email], 200);
                     } catch (\Exception $e) {
 

@@ -12,6 +12,8 @@ use App\Models\Notification;
 use App\Models\AdminUser;
 use App\Models\MasterRepo;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Order;
+
 
 class BaggingCheckerDelivery extends Controller
 {
@@ -383,7 +385,8 @@ function DeliverNow(Request $req){
         $user->delete();
 
 
-
+        $userOrder =  Order::where("UserId",$s->UserId)->where("OrderId",$req->OrderId)->first();
+        $userOrder->delete();
 
 
 

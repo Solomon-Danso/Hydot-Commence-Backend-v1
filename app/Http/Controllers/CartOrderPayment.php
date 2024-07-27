@@ -635,7 +635,7 @@ if ($pay) {
             $product->PurchaseCounter = $product->PurchaseCounter+1;
             $product->save();
 
-            $o->OrderStatus = "awaiting shipment";
+            $o->OrderStatus = "awaiting delivery";
             $o->save();
 
         }
