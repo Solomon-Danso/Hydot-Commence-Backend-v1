@@ -385,8 +385,16 @@ function DeliverNow(Request $req){
         $user->delete();
 
 
-        $userOrder =  Order::where("UserId",$s->UserId)->where("OrderId",$req->OrderId)->first();
-        $userOrder->delete();
+        $orderList = Order::where("UserId",$s->UserId)->where("OrderId",$req->OrderId)->get();
+        if($orderList->isEmpty()) {
+            return response()->json(["message"=>"Your order is empty"],400);
+        }
+
+        foreach($orderList as $item){
+            $item->OrderStatus = "delivered";
+            $item->save();
+        }
+
 
 
 
