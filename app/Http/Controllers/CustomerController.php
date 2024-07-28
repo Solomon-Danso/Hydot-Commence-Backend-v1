@@ -143,7 +143,7 @@ function AdminViewSingleCustomer(Request $req){
     }
 
     $message = "Viewed Details";
-    $this->audit->CustomerAuditor($req->UserId, $message);
+    $this->audit->Auditor($req->UserId, $message);
 
    return $s;
 }

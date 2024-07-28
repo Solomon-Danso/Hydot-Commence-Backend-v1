@@ -97,6 +97,7 @@ Route::get('GetWebsite', [WebsiteController::class, 'GetWebsite']);
 Route::post('ViewProductImage', [MenuCategoryProduct::class, 'ViewProductImage']);
 
 Route::post('SearchProducts', [MenuCategoryProduct::class, 'SearchProducts']);
+Route::post('AdminViewSingleCustomer', [CustomerController::class, 'AdminViewSingleCustomer']);
 
 
 
