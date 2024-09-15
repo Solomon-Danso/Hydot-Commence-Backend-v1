@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use App\Models\RateLimitCatcher;
 use App\Models\Customer;
-
+use DateTime;
 
 
 class AuditTrialController extends Controller
@@ -428,7 +428,7 @@ public function RateLimitTracker($Ip) {
             throw new \Exception('JSON decoding error: ' . json_last_error_msg());
         }
 
-       
+
 
         $country = $ipDetails->country ?? 'Unknown';
         $city = $ipDetails->city ?? 'Unknown';
@@ -477,7 +477,7 @@ function RoleList(Request $req){
     }
 
 
-  $RoleList = [
+    $RoleList = [
     "Can_Create_Role",
     "Can_View_Role",
     "Can_Delete_Role",
@@ -487,6 +487,7 @@ function RoleList(Request $req){
     "Can_Block_Admin",
     "Can_UnBlock_Admin",
     "Can_Suspend_Admin",
+    "Can_Configure_PaymentMethods",
     "Can_UnSuspend_Admin",
     "Can_View_All_Admin",
     "Can_Delete_Admin",
@@ -528,15 +529,32 @@ function RoleList(Request $req){
 
 
 
-];
+    ];
 
-sort($RoleList);
+    sort($RoleList);
 
-return response()->json(["message"=>$RoleList],200);
+    return response()->json(["message"=>$RoleList],200);
 
 
 }
 
+
+function PaymentMethodsList(Request $req){
+
+
+    $PaymentList = [
+   "Mobile Money",
+   "Bank Card",
+   "Hire Purchase",
+   "Credit Sales"
+    ];
+
+    sort($PaymentList);
+
+    return response()->json(["message"=>$PaymentList],200);
+
+
+}
 
 
 
@@ -628,6 +646,12 @@ function ManualFreeze($Ip, $attempts, $minute)
 
     function IdGenerator(): string {
         $randomID = str_pad(mt_rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+        return $randomID;
+    }
+
+    function ProformaIdGenerator(): string {
+        $dateTime = new DateTime();
+        $randomID = $dateTime->format('YmdHis');
         return $randomID;
     }
 

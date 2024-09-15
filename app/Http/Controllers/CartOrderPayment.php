@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Bagging;
 use Illuminate\Support\Facades\DB;
 use App\Models\Notification;
+use App\Models\CreditSales;
+use App\Models\HirePurchase;
 
 
 class CartOrderPayment extends Controller
@@ -29,7 +31,7 @@ class CartOrderPayment extends Controller
 
     }
 
-    function AddToCart(Request $req){
+function AddToCart(Request $req){
 
 
 
@@ -112,9 +114,9 @@ class CartOrderPayment extends Controller
 
 
 
-    }
+}
 
-    function UpdateCart(Request $req){
+function UpdateCart(Request $req){
         $this->audit->RateLimit($req->ip());
 
         $s = Cart::where("CartId", $req->CartId)->first();
@@ -168,9 +170,9 @@ class CartOrderPayment extends Controller
 
 
         return $s;
-    }
+}
 
-    function DeleteCart(Request $req){
+function DeleteCart(Request $req){
         $this->audit->RateLimit($req->ip());
 
         $s = Cart::where("CartId", $req->CartId)->first();
@@ -190,9 +192,9 @@ class CartOrderPayment extends Controller
         }
 
 
-    }
+}
 
-    function AddToOrder(Request $req){
+function AddToOrder(Request $req){
 
 
 
@@ -252,9 +254,9 @@ class CartOrderPayment extends Controller
 
 
 
-    }
+}
 
-    function ViewAllOrder(Request $req)
+function ViewAllOrder(Request $req)
     {
         $this->audit->RateLimit($req->ip());
 
@@ -295,9 +297,9 @@ class CartOrderPayment extends Controller
 
         return $s;
 
-    }
+}
 
-    function EditProductInDetailedOrder(Request $req){
+function EditProductInDetailedOrder(Request $req){
         $this->audit->RateLimit($req->ip());
         $s = Order::where("UserId", $req->UserId)->where("ProductId", $req->ProductId)->first();
         if(!$s){
@@ -342,10 +344,10 @@ class CartOrderPayment extends Controller
 
 
 
-    }
+}
 
 
-    function AddDeliveryDetails(Request $req){
+function AddDeliveryDetails(Request $req){
         $this->audit->RateLimit($req->ip());
         $r = Customer::where("UserId", $req->UserId)->first();
         if (!$r) {
@@ -403,24 +405,98 @@ class CartOrderPayment extends Controller
         $shipping = 0.08 * $total;
         $tax = 0.01 * $total;
         $totalPay = $total + $shipping + $tax;
-
-        // Format the total amount to 2 decimal places without commas
         $formattedTotal = number_format($totalPay, 2, '.', '');
 
-        $p = new Payment();
-        $p->OrderId = $req->OrderId;
-        $p->Phone = $r->Phone;
-        $p->Email = $r->Email;
-        $p->AmountPaid = $formattedTotal;
-        $p->UserId = $req->UserId;
 
-        $saver = $p->save();
+if($req->PaymentMethod == "Mobile Money or Credit Card"){
 
+    $p = new Payment();
+    $p->OrderId = $req->OrderId;
+    $p->Phone = $r->Phone;
+    $p->Email = $r->Email;
+    $p->AmountPaid = $formattedTotal;
+    $p->UserId = $req->UserId;
+
+    $saver = $p->save();
+
+    if($saver){
         $message = $req->OrderId." order has been placed";
         $this->audit->CustomerAuditor($req->UserId, $message);
-
         return response()->json(["message"=>"Your location information has been sent"], 200);
+    }else{
+
+        return response()->json(["message"=>"Failed to Process Order"], 400);
+
     }
+
+
+
+
+}
+
+if($req->PaymentMethod == "Credit Sales"){
+
+    $p = new CreditSales();
+    $p->OrderId = $req->OrderId;
+    $p->ReferenceId = $this->audit->ProformaIdGenerator();
+    $p->Phone = $r->Phone;
+    $p->Email = $r->Email;
+    $p->CreditAmount = $formattedTotal;
+    $p->UserId = $r->UserId;
+    $p->FullName = $r->userName;
+    $p->DigitalAddress = $req->DigitalAddress;
+    $p->NationalIDType = $req->NationalIDType;
+    $p->NationalID = $req->NationalID;
+
+    $saver = $p->save();
+
+    if($saver){
+        $message = $req->OrderId." order has been placed";
+        $this->audit->CustomerAuditor($req->UserId, $message);
+        return response()->json(["message"=>"Your order has been processed, awaiting approval"], 200);
+    }else{
+
+        return response()->json(["message"=>"Failed to Process Order"], 400);
+
+    }
+
+
+
+}
+
+if($req->PaymentMethod == "Hire Purchase"){
+
+    $p = new HirePurchase();
+    $p->OrderId = $req->OrderId;
+    $p->ReferenceId = $this->audit->ProformaIdGenerator();
+    $p->Phone = $r->Phone;
+    $p->Email = $r->Email;
+    $p->CreditAmount = $formattedTotal;
+    $p->UserId = $r->UserId;
+    $p->FullName = $r->userName;
+    $p->DigitalAddress = $req->DigitalAddress;
+    $p->NationalIDType = $req->NationalIDType;
+    $p->NationalID = $req->NationalID;
+
+    $saver = $p->save();
+
+    if($saver){
+        $message = $req->OrderId." order has been placed";
+        $this->audit->CustomerAuditor($req->UserId, $message);
+        return response()->json(["message"=>"Your order has been processed, awaiting approval"], 200);
+    }else{
+
+        return response()->json(["message"=>"Failed to Process Order"], 400);
+
+    }
+
+
+
+}
+
+
+
+}
 
 
     function DeleteProductInDetailedOrder(Request $req){
@@ -501,16 +577,16 @@ class CartOrderPayment extends Controller
 
 
 
-    public function Payment($UserId, $OrderId)
+public function Payment($UserId, $OrderId)
     {
         $pay = Payment::where("UserId", $UserId)
         ->where("OrderId", $OrderId)
         ->where("Status", "confirmed")
         ->first();
 
-if ($pay) {
-    return response()->json(["message" => "Payment already completed, awaiting delivery"], 400);
-}
+    if ($pay) {
+        return response()->json(["message" => "Payment already completed, awaiting delivery"], 400);
+    }
 
 
         $s = Payment::where("UserId", $UserId)->where("OrderId", $OrderId)->first();
@@ -571,11 +647,11 @@ if ($pay) {
         } else {
             return response()->json(["message" => "Failed to initialize payment"], 400);
         }
-    }
+}
 
 
 
-    function ConfirmPayment($RefId)
+function ConfirmPayment($RefId)
     {
         // Find the payment record in your local database
         $a = Payment::where("ReferenceId", $RefId)->first();
@@ -653,20 +729,20 @@ if ($pay) {
        }
 
 
-    }
+}
 
 function ViewAllPayment(Request $req){
     $this->audit->RateLimit($req->ip());
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Payment");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+    }
         $pay = Payment::orderBy("created_at","desc")->get();
 
         return $pay;
 
 
- }
+}
 
 function GetCustNotification(Request $req){
     $this->audit->RateLimit($req->ip());

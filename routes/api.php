@@ -151,6 +151,8 @@ Route::middleware([ApiAuthenticator::class])->group(function () {
  *                                            *
  **********************************************/
 Route::post('RoleList', [AuditTrialController::class, 'RoleList']);
+Route::post('PaymentMethodsList', [AuditTrialController::class, 'PaymentMethodsList']);
+
 Route::post('CreateUserRole', [AuditTrialController::class, 'CreateUserRole']);
 Route::post('ViewUserFunctions', [AuditTrialController::class, 'ViewUserFunctions']);
 Route::post('DeleteUserFunctions', [AuditTrialController::class, 'DeleteUserFunctions']);
