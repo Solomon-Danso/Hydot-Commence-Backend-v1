@@ -543,10 +543,11 @@ function PaymentMethodsList(Request $req){
 
 
     $PaymentList = [
-   "Mobile Money",
-   "Bank Card",
-   "Hire Purchase",
-   "Credit Sales"
+   "Mobile Money or Card",
+   "Payment On Delivery",
+   "Credit Sales",
+   "Coupon",
+   "Voucher",
     ];
 
     sort($PaymentList);

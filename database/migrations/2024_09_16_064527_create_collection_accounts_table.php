@@ -11,22 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('hire_purchases', function (Blueprint $table) {
+        Schema::create('collection_accounts', function (Blueprint $table) {
             $table->id();
+            $table->longText("AccountType")->nullable();
             $table->longText("OrderId")->nullable();
-            $table->longText("ReferenceId")->nullable();
+            $table->longText("AccountId")->nullable();
             $table->longText("Phone")->nullable();
             $table->longText("Email")->nullable();
-            $table->decimal("CreditAmount")->nullable();
+            $table->decimal("Debit")->nullable();
+            $table->decimal("Credit")->nullable();
+            $table->decimal("Balance")->nullable();
+            $table->decimal("AmountToPay")->nullable();
             $table->longText("UserId")->nullable();
             $table->longText("FullName")->nullable();
-            $table->longText("DigitalAddress")->nullable();
-            $table->longText("NationalIDType")->nullable();
-            $table->longText("NationalID")->nullable();
-            $table->decimal("BalanceLeft")->nullable();
-            $table->boolean("IsApproved")->default(false);
             $table->dateTime("NextBillingDate")->nullable();
-            $table->decimal("AmountToPay")->nullable();
+            $table->dateTime("Deadline")->nullable();
+            $table->integer("DaysToPayment"); // Column to hold number of days for payment
+
+
+
             $table->timestamps();
         });
     }
@@ -36,6 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('hire_purchases');
+        Schema::dropIfExists('collection_accounts');
     }
 };

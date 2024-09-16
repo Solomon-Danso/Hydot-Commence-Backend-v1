@@ -17,7 +17,6 @@ use App\Models\Bagging;
 use Illuminate\Support\Facades\DB;
 use App\Models\Notification;
 use App\Models\CreditSales;
-use App\Models\HirePurchase;
 
 
 class CartOrderPayment extends Controller
@@ -437,36 +436,6 @@ if($req->PaymentMethod == "Mobile Money or Credit Card"){
 if($req->PaymentMethod == "Credit Sales"){
 
     $p = new CreditSales();
-    $p->OrderId = $req->OrderId;
-    $p->ReferenceId = $this->audit->ProformaIdGenerator();
-    $p->Phone = $r->Phone;
-    $p->Email = $r->Email;
-    $p->CreditAmount = $formattedTotal;
-    $p->UserId = $r->UserId;
-    $p->FullName = $r->userName;
-    $p->DigitalAddress = $req->DigitalAddress;
-    $p->NationalIDType = $req->NationalIDType;
-    $p->NationalID = $req->NationalID;
-
-    $saver = $p->save();
-
-    if($saver){
-        $message = $req->OrderId." order has been placed";
-        $this->audit->CustomerAuditor($req->UserId, $message);
-        return response()->json(["message"=>"Your order has been processed, awaiting approval"], 200);
-    }else{
-
-        return response()->json(["message"=>"Failed to Process Order"], 400);
-
-    }
-
-
-
-}
-
-if($req->PaymentMethod == "Hire Purchase"){
-
-    $p = new HirePurchase();
     $p->OrderId = $req->OrderId;
     $p->ReferenceId = $this->audit->ProformaIdGenerator();
     $p->Phone = $r->Phone;
