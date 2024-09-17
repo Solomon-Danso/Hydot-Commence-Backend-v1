@@ -444,6 +444,12 @@ function ViewProduct(Request $req){
     return $s;
 }
 
+function ViewProductAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $s = Product::get();
+    return $s;
+}
+
 function ViewCategoryProduct(Request $req){
     $this->audit->RateLimit($req->ip());
     $s = Product::where("Quantity",">",0)->where("CategoryId", $req->CategoryId)->get();

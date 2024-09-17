@@ -321,7 +321,7 @@ function TokenGenerator(): string {
 
 
     function IdGenerator(): string {
-        $randomID = str_pad(mt_rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+          $randomID = str_pad(mt_rand(10000, 99999), 5, '0', STR_PAD_LEFT);
         return $randomID;
         }
 

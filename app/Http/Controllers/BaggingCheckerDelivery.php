@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Order;
 
 
+
 class BaggingCheckerDelivery extends Controller
 {
 
@@ -383,9 +384,8 @@ function DeliverNow(Request $req){
 
         $user = Notification::where("UserId",$s->UserId)->where("OrderId",$req->OrderId)->first();
         $user->delete();
-
-
-        $orderList = Order::where("UserId",$s->UserId)->where("OrderId",$req->OrderId)->get();
+        
+         $orderList = Order::where("UserId",$s->UserId)->where("OrderId",$req->OrderId)->get();
         if($orderList->isEmpty()) {
             return response()->json(["message"=>"Your order is empty"],400);
         }
@@ -394,6 +394,7 @@ function DeliverNow(Request $req){
             $item->OrderStatus = "delivered";
             $item->save();
         }
+
 
 
 

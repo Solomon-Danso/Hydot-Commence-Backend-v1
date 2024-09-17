@@ -8,9 +8,14 @@ use App\Model\PaymentConfiguration;
 use App\Models\CreditSales;
 use App\Models\HirePurchase;
 use App\Models\CollectionAccount;
+use App\Models\CollectionPaymentHistory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SalesInvoice;
+use App\Mail\HydotPay;
+use Paystack;
+use Illuminate\Support\Facades\Log;
+use App\Models\Payment;
 
 class MasterControllerV1 extends Controller
 {
@@ -124,6 +129,7 @@ function AcceptCreditSales(Request $req){
 
     $s->DaysToPayment = ceil($daysToPayment); // Round up to the nearest whole day
     $s->NextBillingDate = $currentDate->addDays($daysToPayment);
+    $s->Status = "InProcess"; //
 
     $c->save();
 
@@ -190,10 +196,183 @@ function RejectCreditSales(Request $req){
 
 }
 
+public function SchedulePayment(Request $req){
+    $currentDate = Carbon::now();
+
+    $creditors = CollectionAccount::where($currentDate,">","=","NextBillingDate")
+    ->where("Status","InProcess")
+    ->get();
+    $amount = 0;
+
+    foreach($creditors as $c){
+
+        if($c->Balance > $c->AmountToPay){
+            $amount = $c->AmountToPay;
+        }else{
+            $amount = $c->Balance;
+        }
+        $TransactionId = $this->audit->IdGenerator();
+
+        $s = new CollectionPaymentHistory;
+        $s->AccountType = $c->AccountType;
+        $s->AccountId = $c->AccountId;
+        $s->UserId = $c->UserId;
+        $s->Email = $c->Email;
+        $s->OrderId = $c->OrderId;
+        $s->OldBalance = $c->Balance;
+        $s->TransactionId = $TransactionId;
+        $s->AmountPaid = $amount;
+        $s->NewBalance = $c->Balance - $amount;
+        $s->Status = "Pending";
+        $s->save();
+
+        $list = [
+            "TransactionId"=> $TransactionId,
+            "Amount" => $amount,
+            "Name" => $c->FullName,
+            "UserId" => $c->UserId,
+            "PaymentReference" =>`Scheduled payment for order with Id {$c->OrderId}`,
+
+        ];
+        try {
+            Mail::to($c->Email)->send(new HydotPay( $list));
+        } catch (\Exception $e) {
+            Log::info("Failed to send invoice to: {$c->Email}");
+        }
+
+
+
+
+    }
+
+
+
+}
+
+
+
+
+public function MakePayment($TransactionId)
+{
+    $sales = CollectionPaymentHistory::where("TransactionId", $TransactionId)->first();
+    if (!$sales) {
+        return response()->json(["message" => "Transaction not found"], 400);
+    }
+
+    // Ensure the total amount is an integer and in the smallest currency unit (e.g., kobo, pesewas)
+    $totalInPesewas = intval($sales->AmountPaid * 100);
+
+    //$tref = Paystack::genTranxRef();
+    $email = $sales->Email;
+
+    $saver = $sales->save();
+    if ($saver) {
+        $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', [
+            'tref' =>  $TransactionId,
+            'ProductId' => "hdtCollection",
+            'Product' => 'Manual Collection',
+            'Username' => $sales->UserId,
+            'Amount' => $sales->AmountPaid,
+            'SuccessApi' => 'https://127.0.0.1:8000/api/ConfirmPayment/' . $TransactionId,
+            //'SuccessApi' => 'https://hydottech.com',
+            'CallbackURL' => 'https://hydottech.com',
+        ]);
+
+        if ($response->successful()) {
+
+
+            $paystackData = [
+                "amount" => $totalInPesewas, // Amount in pesewas
+                "reference" => $TransactionId,
+                "email" => $email,
+                "currency" => "GHS",
+            ];
+
+            return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
+        } else {
+            return response()->json(["message" => "External Payment Api is down"], 400);
+        }
+    } else {
+        return response()->json(["message" => "Failed to initialize payment"], 400);
+    }
+}
+
+
+
+function ConfirmCreditPayment($TransactionId)
+{
+
+    $c = CollectionPaymentHistory::where("TransactionId", $TransactionId)->first();
+    if (!$c) {
+        return response()->json(["message" => "Transaction not found"], 400);
+    }
+
+    $c->Status = "Confirmed";
+
+    $ca = CollectionAccount::where("AccountId", $c->AccountId)->first();
+    if (!$ca) {
+        return response()->json(["message" => "Account not found"], 400);
+    }
+
+    $oldDate = $ca->NextBillingDate;
+    $newBalance = $c->Balance - $c->AmountPaid;
+    $ca->Debit = $c->Balance;
+    $ca->Credit = $c->AmountPaid;
+    $ca->Balance =  $newBalance;
+
+    if( $newBalance <= 0){
+        $ca->Status = "Completed";
+    }
+    else{
+        $ca->Status = "InProcess";
+    }
+
+    $ca->NextBillingDate = $oldDate->addDays($ca->DaysToPayment);
+
+    $p = new Payment();
+    $p->OrderId = $ca->OrderId;
+    $p->Phone = $ca->Phone;
+    $p->Email = $ca->Email;
+    $p->AmountPaid =  $c->AmountPaid;
+    $p->UserId = $ca->UserId;
+
+
+
+
+    $cSaver = $c->save();
+    $caSaver = $ca->save();
+    $pSaver = $p->save();
+
+    if( $cSaver & $caSaver & $pSaver ){
+        $message = "A payment of ".$c->AmountPaid." has been made for the order with ID ".$ca->OrderId." as ".$ca->AccountType;
+        $this->audit->CustomerAuditor($ca->UserId, $message);
+        return response()->json(["message"=>"Operation was successful"],200);
+
+    }
+    else{
+        return response()->json(["message"=>"Operation was unsuccessful"],400);
+    }
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
 
 //TODO:
 /*
-1. A function that will automatically send a manual payment Invoice To all Clients
+1. A function that will automatically send a manual payment Invoice To all Clients [Done]
 2. A function a user can send the payment invoice to a specific customer
 3. A function to cater for late payment, where a user can manually input the amount
 4. A function from the frontend to the backend where the user can pay in advance

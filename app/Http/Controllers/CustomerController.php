@@ -134,6 +134,7 @@ function ViewSingleCustomer(Request $req){
 }
 
 
+
 function AdminViewSingleCustomer(Request $req){
     $this->audit->RateLimit($req->ip());
     $s = Customer::where("UserId", $req->UserId)->first();
@@ -337,7 +338,7 @@ function DeleteCustomer(Request $req){
 
 
 function IdGenerator(): string {
-    $randomID = str_pad(mt_rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+    $randomID = str_pad(mt_rand(1, 99999999), 5, '0', STR_PAD_LEFT);
     return $randomID;
 }
 

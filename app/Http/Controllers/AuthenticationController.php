@@ -32,7 +32,7 @@ public function LogIn(Request $req)
         if(!$user){
             return response()->json(['message' => 'Invalid Username'], 400);
         }
-        $user->TokenId = $this->IdGenerator();
+        $user->TokenId = $this->Id5Generator();
         $user->TokenExpire = Carbon::now()->addMinutes(10);
         $user->save();
 
@@ -127,14 +127,14 @@ public function LogIn(Request $req)
             }
             else{
 
-                $user->TokenId = $this->IdGenerator();
+                $user->TokenId = $this->Id5Generator();
                 $user->TokenExpire = Carbon::now()->addMinutes(10);
 
                 $saver = $user->save();
                 if ($saver) {
                     // Send email if the request is successful
                     try {
-                        Mail::to($user->Email)->send(new Authentication( $user->Token));
+                        Mail::to($user->Email)->send(new Authentication( $user->TokenId));
                         return response()->json(['message' => "A verification token has been sent to ".$user->Email], 200);
                     } catch (\Exception $e) {
 
@@ -319,12 +319,11 @@ function TokenGenerator(): string {
 
 
 
-    function IdGenerator(): string {
-        $randomID = str_pad(mt_rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+
+ function Id5Generator(): string {
+        $randomID = str_pad(mt_rand(1, 99999999), 5, '0', STR_PAD_LEFT);
         return $randomID;
-        }
-
-
+    }
 
 
 

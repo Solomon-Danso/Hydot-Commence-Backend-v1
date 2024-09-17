@@ -99,7 +99,7 @@ Route::post('ViewProductImage', [MenuCategoryProduct::class, 'ViewProductImage']
 Route::post('SearchProducts', [MenuCategoryProduct::class, 'SearchProducts']);
 Route::post('AdminViewSingleCustomer', [CustomerController::class, 'AdminViewSingleCustomer']);
 
-
+Route::get('MakePayment/{TransactionId}', [GlobalPaymentController::class, 'MakePayment']);
 
 
 

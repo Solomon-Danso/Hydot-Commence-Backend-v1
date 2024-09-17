@@ -17,6 +17,7 @@ use App\Models\Bagging;
 use Illuminate\Support\Facades\DB;
 use App\Models\Notification;
 use App\Models\CreditSales;
+use App\Models\CollectionAccount;
 
 
 class CartOrderPayment extends Controller
@@ -590,10 +591,9 @@ public function Payment($UserId, $OrderId)
                 'ProductId' => "hdtCommerce",
                 'Product' => 'Hydot Commerce',
                 'Username' => $s->Phone,
-                'Amount' => $total,
-                //'SuccessApi' => 'http://127.0.0.1:8000/api/ConfirmPayment/'.$tref,
-                'SuccessApi' => 'https://hydottech.com',
-                'CallbackURL' => 'http://localhost:3000/orders',
+                'Amount' => $s->AmountPaid,
+                'SuccessApi' => 'https://api.commerce.hydottech.com/api/ConfirmPayment/'.$tref,
+                'CallbackURL' => 'https://web.commerce.hydottech.com/orders',
             ]);
 
             if ($response->successful()) {
