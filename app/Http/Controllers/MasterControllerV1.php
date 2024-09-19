@@ -237,7 +237,7 @@ public function SchedulePayment(Request $req){
         try {
             Mail::to($c->Email)->send(new HydotPay( $list));
         } catch (\Exception $e) {
-            Log::info("Failed to send invoice to: {$c->Email}");
+            Log::info(`Failed to send invoice to: {$c->Email}`);
         }
 
 
@@ -249,6 +249,58 @@ public function SchedulePayment(Request $req){
 
 }
 
+
+public function ScheduleSinglePayment(Request $req){
+    $currentDate = Carbon::now();
+
+    $c = CollectionAccount::where("AccountId",$req->AccountId)
+    ->where("Status","InProcess")
+    ->first();
+    $amount = $req->Amount;
+
+        $TransactionId = $this->audit->IdGenerator();
+
+        $s = new CollectionPaymentHistory;
+        $s->AccountType = $c->AccountType;
+        $s->AccountId = $c->AccountId;
+        $s->UserId = $c->UserId;
+        $s->Email = $c->Email;
+        $s->OrderId = $c->OrderId;
+        $s->OldBalance = $c->Balance;
+        $s->TransactionId = $TransactionId;
+        $s->AmountPaid = $amount;
+        $s->NewBalance = $c->Balance - $amount;
+        $s->Status = "Pending";
+        $s->save();
+
+        $list = [
+            "TransactionId"=> $TransactionId,
+            "Amount" => $amount,
+            "Name" => $c->FullName,
+            "UserId" => $c->UserId,
+            "PaymentReference" =>`Scheduled payment for order with Id {$c->OrderId}`,
+
+        ];
+        try {
+            Mail::to($c->Email)->send(new HydotPay( $list));
+            $message = `Requested {$c->FullName} with UserId {$c->UserId} to pay {$amount} for the Order with Id {$c->OrderId}`;
+            $this->audit->Auditor($req->AdminId, $message);
+            return response()->json(["message"=>"Payment Scheduled Successfully"],200);
+
+        } catch (\Exception $e) {
+            Log::info("Failed to send invoice to: {$c->Email}");
+            return response()->json(["message"=>`Failed to send invoice to: {$c->Email}`],200);
+
+        }
+
+
+
+
+
+
+
+
+}
 
 
 
@@ -363,6 +415,10 @@ function ConfirmCreditPayment($TransactionId)
 }
 
 
+//Voucher System 
+
+
+
 
 
 
@@ -373,9 +429,9 @@ function ConfirmCreditPayment($TransactionId)
 //TODO:
 /*
 1. A function that will automatically send a manual payment Invoice To all Clients [Done]
-2. A function a user can send the payment invoice to a specific customer
-3. A function to cater for late payment, where a user can manually input the amount
-4. A function from the frontend to the backend where the user can pay in advance
+2. A function a user can send the payment invoice to a specific customer [Done]
+3. A function to cater for late payment, where a user can manually input the amount [Done]
+4. A function from the frontend to the backend where the user can pay in advance [Will Cause A Lot Of Issues]
 5. Users can automatically buy Vouchers which will be used by a specific customer to shop
 
 
