@@ -70,8 +70,6 @@ function AddToCart(Request $req){
 
                 $message = $p->Title." was added to cart";
                 $this->audit->CustomerAuditor($req->UserId, $message);
-
-
                 return response()->json(["message"=>$checker->Title." added to cart successfully"],200);
             }else{
                 return response()->json(["message"=>"Failed to add ".$checker->Title." to cart"],400);
@@ -89,7 +87,13 @@ function AddToCart(Request $req){
             $s->ProductId = $p->ProductId;
             $s->Picture = $p->Picture;
             $s->Title = $p->Title;
-            $s->Price = $p->Price;
+            
+            if($p->DiscountPrice>0){
+                $s->Price = $p->DiscountPrice;
+            }else{
+                $s->Price = $p->Price;
+            }
+
 
             if ($req->Quantity > $p->Quantity) {
                 return response()->json(["message" => "Your requested quantity exceeds the available stock."], 400);
