@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Notification;
 use App\Models\CreditSales;
 use App\Models\CollectionAccount;
+use App\Models\ShoppingCard;
 
 
 class CartOrderPayment extends Controller
@@ -433,6 +434,75 @@ if($req->PaymentMethod == "Mobile Money or Credit Card"){
 
 
 }
+
+if($req->PaymentMethod == "Shopping Card"){
+
+$card = ShoppingCard::where("CardNumber",$req->CardNumber)->first();
+
+if(!$card){
+    return response()->json(["message"=>"The Card You Entered Does Not Exist"],400);
+}
+
+if($card->AccountHolderID != $r->UserId){
+    return response()->json(["message"=>"You are not authorised to use this card"],400);
+}
+
+if($card->Amount < $formattedTotal){
+    return response()->json(["message"=>`The amount left on the card is {$card->Amount}, please top-up to continue`],400);
+}
+
+
+
+
+    $p = new Payment();
+    $p->OrderId = $req->OrderId;
+    $p->Phone = $r->Phone;
+    $p->Email = $r->Email;
+    $p->AmountPaid = $formattedTotal;
+    $p->UserId = $card->AccountHolderID;
+
+    $saver = $p->save();
+
+    $card->Amount = $card->Amount-$formattedTotal;
+    $card->save();
+
+
+    $baggingId = $this->audit->IdGenerator();
+
+    $m = new MasterRepo();
+    $m->MasterId =  $p->OrderId;
+    $m->UserId =  $p->UserId;
+    $m->OrderId = $p->OrderId;
+    $m->BaggingId = $baggingId;
+    $m->save();
+
+    $b = new Bagging();
+    $b->MasterId = $p->OrderId;
+    $b->UserId = $p->UserId;
+    $b->OrderId = $p->OrderId;
+    $b->BaggingId =  $baggingId;
+    $b->PaymentId = $this->audit->IdGenerator();
+    $b->save();
+
+
+
+
+
+    if($saver){
+        $message = $req->OrderId." order has been placed";
+        $this->audit->CustomerAuditor($req->UserId, $message);
+        return response()->json(["message"=>"Your location information has been sent"], 200);
+    }else{
+
+        return response()->json(["message"=>"Failed to Process Order"], 400);
+
+    }
+
+
+
+
+}
+
 
 if($req->PaymentMethod == "Credit Sales"){
 

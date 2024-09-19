@@ -20,6 +20,8 @@ use App\Models\Payment;
 use App\Models\ShoppingCard;
 use App\Models\ShoppingCardCollector;
 use App\Models\Customer;
+use App\Models\MasterRepo;
+use App\Models\Bagging;
 
 class MasterControllerV1 extends Controller
 {
@@ -140,7 +142,43 @@ function AcceptCreditSales(Request $req){
     $saver = $s->save();
 
     if($saver){
-        //Send Email Informing the Client That Their Credit Sales has been approved
+
+        $baggingId = $this->audit->IdGenerator();
+
+        $m = new MasterRepo();
+        $m->MasterId =  $c->OrderId;
+        $m->UserId =  $s->UserId;
+        $m->OrderId = $c->OrderId;
+        $m->BaggingId = $baggingId;
+        $m->save();
+
+        $b = new Bagging();
+        $b->MasterId = $c->OrderId;
+        $b->UserId = $s->UserId;
+        $b->OrderId = $c->OrderId;
+        $b->BaggingId =  $baggingId;
+        $b->PaymentId = $s->AccountId;
+        $b->save();
+
+        $orderList = Order::where("UserId", $c->UserId)->where("OrderId", $c->OrderId)->get();
+
+        foreach($orderList as $o){
+            $product = Product::where("ProductId", $o->ProductId)->first();
+            if(!$product){
+                return response()->json(["message"=>"Invalid Product in your order"],400);
+            }
+
+            $product->Quantity = $product->Quantity - $o->Quantity;
+            $product->PurchaseCounter = $product->PurchaseCounter+1;
+            $product->save();
+
+            $o->OrderStatus = "awaiting delivery";
+            $o->save();
+
+        }
+
+
+
 
         $list = [
             "Fullname"=>$s->FullName,
@@ -659,11 +697,9 @@ function CardInformation(Request $req){
 
 //TODO:
 /*
-1. A function that will automatically send a manual payment Invoice To all Clients [Done]
-2. A function a user can send the payment invoice to a specific customer [Done]
-3. A function to cater for late payment, where a user can manually input the amount [Done]
-4. A function from the frontend to the backend where the user can pay in advance [Will Cause A Lot Of Issues]
-5. Users can automatically buy Vouchers which will be used by a specific customer to shop [Done]
+1. Configure Payment method to be accessible with Card
+2. Delivery Price Calculations
+3. Discount On Selected Products
 
 */
 
