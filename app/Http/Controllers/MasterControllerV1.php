@@ -12,10 +12,14 @@ use App\Models\CollectionPaymentHistory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SalesInvoice;
-use App\Mail\HydotPay;
+use App\Mail\CreditPayment;
+use App\Mail\ShoppingCards;
 use Paystack;
 use Illuminate\Support\Facades\Log;
 use App\Models\Payment;
+use App\Models\ShoppingCard;
+use App\Models\ShoppingCardCollector;
+use App\Models\Customer;
 
 class MasterControllerV1 extends Controller
 {
@@ -235,7 +239,7 @@ public function SchedulePayment(Request $req){
 
         ];
         try {
-            Mail::to($c->Email)->send(new HydotPay( $list));
+            Mail::to($c->Email)->send(new CreditPayment( $list));
         } catch (\Exception $e) {
             Log::info(`Failed to send invoice to: {$c->Email}`);
         }
@@ -282,7 +286,7 @@ public function ScheduleSinglePayment(Request $req){
 
         ];
         try {
-            Mail::to($c->Email)->send(new HydotPay( $list));
+            Mail::to($c->Email)->send(new CreditPayment( $list));
             $message = `Requested {$c->FullName} with UserId {$c->UserId} to pay {$amount} for the Order with Id {$c->OrderId}`;
             $this->audit->Auditor($req->AdminId, $message);
             return response()->json(["message"=>"Payment Scheduled Successfully"],200);
@@ -415,9 +419,236 @@ function ConfirmCreditPayment($TransactionId)
 }
 
 
-//Voucher System 
+//Shopping Card Information
+
+public function ScheduleShoppingCard(Request $req){
+
+    $user = Customer::where('Email', $req->Email)->first();
+    if(!$user){
+        return response()->json(['message' => 'Invalid Customer Email'], 400);
+
+    }
+
+    $maker = Customer::where('UserId',  $req->UserId)->first();
+    if(!$maker){
+        return response()->json(['message' => 'Not Authorized'], 400);
+
+    }
 
 
+        $TransactionId = $this->audit->IdGenerator();
+
+        $s = new ShoppingCardCollector();
+        $s->TransactionID = $TransactionId;
+        $s->PurchasedByID = $maker->UserId;
+        $s->Amount = $req->Amount;
+        $s->AccountHolderID = $user->UserId;
+        $s->AccountHolderName = $user->Username;
+        $s->Status = "Pending";
+        $s->Email = $maker->Email;
+
+        if($req->filled("CardNumber")){
+            $s->CardNumber = $req->CardNumber;
+        }
+        else{
+            $s->CardNumber = $this->audit->IdGenerator();
+        }
+        $s->save();
+
+        $list = [
+            "TransactionId"=> $TransactionId,
+            "Amount" => $s->Amount,
+            "Name" => $s->AccountHolderName,
+            "UserId" => $s->AccountHolderID,
+            "PaymentReference" =>`Shopping Card Topup for {$s->AccountHolderName}`,
+
+        ];
+        try {
+            Mail::to($maker->Email)->send(new ShoppingCards( $list));
+            $message = `Shopping Card Topup for {$s->AccountHolderName}`;
+            $this->audit->CustomerAuditor($s->PurchasedByID, $message);
+            return response()->json(["message"=>"Check Your Email To Complete The Topup"],200);
+
+        } catch (\Exception $e) {
+            Log::info("Failed to send invoice to: {$maker->Email}");
+            return response()->json(["message"=>`Failed to send Email to: {$maker->Email}`],200);
+
+        }
+
+
+
+
+
+
+
+
+}
+
+
+public function MakePaymentForShoppingCard($TransactionId)
+{
+    $sales = ShoppingCardCollector::where("TransactionId", $TransactionId)->first();
+    if (!$sales) {
+        return response()->json(["message" => "Transaction not found"], 400);
+    }
+
+    // Ensure the total amount is an integer and in the smallest currency unit (e.g., kobo, pesewas)
+    $totalInPesewas = intval($sales->Amount * 100);
+
+    //$tref = Paystack::genTranxRef();
+    $email = $sales->Email;
+
+    $saver = $sales->save();
+    if ($saver) {
+        $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', [
+            'tref' =>  $TransactionId,
+            'ProductId' => "hdtCollection",
+            'Product' => 'Manual Collection',
+            'Username' => $sales->UserId,
+            'Amount' => $sales->Amount,
+            'SuccessApi' => 'https://127.0.0.1:8000/api/ConfirmShoppingCardPayment/' . $TransactionId,
+            //'SuccessApi' => 'https://hydottech.com',
+            'CallbackURL' => 'https://hydottech.com',
+        ]);
+
+        if ($response->successful()) {
+
+
+            $paystackData = [
+                "amount" => $totalInPesewas, // Amount in pesewas
+                "reference" => $TransactionId,
+                "email" => $email,
+                "currency" => "GHS",
+            ];
+
+            return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
+        } else {
+            return response()->json(["message" => "External Payment Api is down"], 400);
+        }
+    } else {
+        return response()->json(["message" => "Failed to initialize payment"], 400);
+    }
+}
+
+
+function ConfirmShoppingCardPaymentOld($TransactionId)
+{
+
+    $c = ShoppingCardCollector::where("TransactionId", $TransactionId)->first();
+    if (!$c) {
+        return response()->json(["message" => "Transaction not found"], 400);
+    }
+
+    $c->Status = "Confirmed";
+
+    $checker = ShoppingCard::where("CardNumber", $c->CardNumber)->first();
+    if($checker){
+        $checker->Amount = $checker->Amount + $c->Amount;
+        $saver = $checker->save();
+    }else{
+
+        $s = new ShoppingCard();
+        $s->PurchasedByID = $c->PurchasedByID;
+        $s->Amount = $c->Amount;
+        $s->AccountHolderID = $c->AccountHolderID;
+        $s->AccountHolderName = $c->AccountHolderName;
+        $s->CardNumber = $c->CardNumber;
+        $saver = $s->save();
+    }
+
+
+    $p = new Payment();
+    $p->OrderId = "Shopping Card";
+    $p->Phone = `For: {$c->PurchasedByID}`;
+    $p->Email = $c->Email;
+    $p->AmountPaid =  $c->Amount;
+    $p->UserId = $c->PurchasedByID;
+
+
+    $cSaver = $c->save();
+    $pSaver = $p->save();
+
+    if( $cSaver & $pSaver & $saver ){
+        $message = "A payment of ".$c->Amount." has been made for a shopping card topup"."by ".$p->UserId;
+        $this->audit->CustomerAuditor($p->UserId, $message);
+        return response()->json(["message"=>"Operation was successful"],200);
+
+    }
+    else{
+        return response()->json(["message"=>"Operation was unsuccessful"],400);
+    }
+
+
+
+
+
+
+
+
+}
+
+
+function ConfirmShoppingCardPayment($TransactionId)
+{
+    $c = ShoppingCardCollector::where("TransactionId", $TransactionId)->first();
+
+    if (!$c) {
+        return response()->json(["message" => "Transaction not found"], 400);
+    }
+
+    // Update the status of the shopping card transaction
+    $c->Status = "Confirmed";
+
+    // Check if the card exists; update or create as necessary
+    $checker = ShoppingCard::firstOrCreate(
+        ["CardNumber" => $c->CardNumber],  // Search condition
+        [ // Default values if the card is not found
+            'PurchasedByID' => $c->PurchasedByID,
+            'AccountHolderID' => $c->AccountHolderID,
+            'AccountHolderName' => $c->AccountHolderName,
+            'Amount' => 0 // Initialize amount if creating a new record
+        ]
+    );
+
+    // Add the amount to the existing or newly created card
+    $checker->Amount += $c->Amount;
+    $saver = $checker->save();
+
+    // Create a payment record
+    $p = new Payment([
+        'OrderId' => "Shopping Card",
+        'Phone' => "For: {$c->PurchasedByID}",
+        'Email' => $c->Email,
+        'AmountPaid' => $c->Amount,
+        'UserId' => $c->PurchasedByID
+    ]);
+
+    // Save both the collector and payment records
+    $cSaver = $c->save();
+    $pSaver = $p->save();
+
+    // If all saves are successful, log the audit and return success response
+    if ($cSaver && $pSaver && $saver) {
+        $message = "A payment of {$c->Amount} has been made for a shopping card top-up by {$p->UserId}";
+        $this->audit->CustomerAuditor($p->UserId, $message);
+        return response()->json(["message" => "Operation was successful"], 200);
+    }
+
+    return response()->json(["message" => "Operation was unsuccessful"], 400);
+}
+
+
+function CardTopupHistory(Request $req){
+    $sales = ShoppingCardCollector::where("CardNumber", $req->CardNumber)->get();
+    $message = "Viewed Card Topup History for " . $req->CardNumber;
+    $this->audit->CustomerAuditor($p->UserId, $message);
+    return $sales;
+}
+
+function CardInformation(Request $req){
+    $sales = ShoppingCard::where("CardNumber", $req->CardNumber)->get();
+    return $sales;
+}
 
 
 
@@ -432,9 +663,7 @@ function ConfirmCreditPayment($TransactionId)
 2. A function a user can send the payment invoice to a specific customer [Done]
 3. A function to cater for late payment, where a user can manually input the amount [Done]
 4. A function from the frontend to the backend where the user can pay in advance [Will Cause A Lot Of Issues]
-5. Users can automatically buy Vouchers which will be used by a specific customer to shop
-
-
+5. Users can automatically buy Vouchers which will be used by a specific customer to shop [Done]
 
 */
 

@@ -5,7 +5,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Sales;
 
-class HydotPay extends Mailable {
+class ShoppingCards extends Mailable {
 use Queueable, SerializesModels;
 
 public $Sales;
@@ -15,7 +15,7 @@ $this->Sales = $Sales;
 }
 
 public function build(){
-return $this->markdown('emails.contact.hydotpay')
+return $this->markdown('emails.contact.shoppingcard')
             ->with(['c' => $this->Sales]);
 
 }
