@@ -522,6 +522,8 @@ function RoleList(Request $req){
     "Can_View_Master_Repo",
     "Can_Select_Role",
     "Can_Configure_Website",
+    "Can_Configure_Delivery",
+    "Can_Run_Promotion",
 
 
 

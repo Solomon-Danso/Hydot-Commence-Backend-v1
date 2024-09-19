@@ -22,6 +22,8 @@ use App\Models\ShoppingCardCollector;
 use App\Models\Customer;
 use App\Models\MasterRepo;
 use App\Models\Bagging;
+use App\Models\DeliveryConfig;
+use App\Models\Products;
 
 class MasterControllerV1 extends Controller
 {
@@ -689,16 +691,94 @@ function CardInformation(Request $req){
 }
 
 
+function DeliveryConfig(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Configure_Delivery");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+    }
+
+    $s = DeliveryConfig::firstOrNew();
+    $s->Latitude = $req->Latitude;
+    $s->Longitude = $req->Longitude;
+    $s->PricePerKm = $req->PricePerKm;
+    $saver = $s->save();
+
+    if($saver){
+        return response()->json(["message"=>"Price Configured Successfully"],200);
+    }else{
+        return response()->json(["message"=>"Price Configuration Failed"],200);
+    }
 
 
+}
+
+function RunPromotion(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Run_Promotion");
+    if ($rp->getStatusCode() !== 200) {
+     return $rp;  // Return the authorization failure response
+    }
+
+    $prd = Product::where("ProductId", $req->ProductId)->first();
+    if (!$prd){
+        return response()->json(["message"=>"Product does not exist"],400);
+    }
+    $prd->DiscountPrice = $req->DiscountPercentage * $prd->Price;
+    $prd->DiscountPercentage = $req->DiscountPercentage;
+    $prd->ValidUntil = $req->ValidUntil;
+    $prd->Status = "ActivePromotion";
+    $saver = $prd->save();
+    if($saver){
+        $message = "Promotion valid until ". $req->ValidUntil;
+        $this->audit->Auditor($req->AdminId, $message);
+        return response()->json(["message"=>$message],200);
+    }
+    else{
+        return response()->json(["message"=>"Failed to schedule promotion"],400);
+    }
+
+
+}
+
+function RevertPromotion(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Run_Promotion");
+    if ($rp->getStatusCode() !== 200) {
+     return $rp;  // Return the authorization failure response
+    }
+
+    $prd = Product::where("ProductId", $req->ProductId)->first();
+    if (!$prd){
+        return response()->json(["message"=>"Product does not exist"],400);
+    }
+    $prd->DiscountPrice = 0;
+    $prd->DiscountPercentage = 0;
+    $prd->ValidUntil = null;
+    $prd->Status = "DisablePromotion";
+    $saver = $prd->save();
+    if($saver){
+        $message = "Promotion reverted ";
+        $this->audit->Auditor($req->AdminId, $message);
+        return response()->json(["message"=>$message],200);
+    }
+    else{
+        return response()->json(["message"=>"Failed to revert promotion"],400);
+    }
+
+
+}
 
 
 
 
 //TODO:
 /*
-1. Configure Payment method to be accessible with Card
-2. Delivery Price Calculations
+1. Configure Payment method to be accessible with Card [Done]
+2. Delivery Price Calculations [Done]
 3. Discount On Selected Products
 
 */

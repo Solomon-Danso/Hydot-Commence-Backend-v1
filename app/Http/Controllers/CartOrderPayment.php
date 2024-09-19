@@ -403,9 +403,12 @@ function AddDeliveryDetails(Request $req){
 
         $total = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->sum(DB::raw('Price * Quantity'));
 
-        $shipping = 0.08 * $total;
-        $tax = 0.01 * $total;
-        $totalPay = $total + $shipping + $tax;
+
+    $distance = $this->getDistance($req->Latitude, $req->Longitude);
+
+    $q = DeliveryConfig::first();
+        $shipping =  $distance * $q->PricePerKm;
+        $totalPay = $total + $shipping;
         $formattedTotal = number_format($totalPay, 2, '.', '');
 
 
@@ -437,19 +440,19 @@ if($req->PaymentMethod == "Mobile Money or Credit Card"){
 
 if($req->PaymentMethod == "Shopping Card"){
 
-$card = ShoppingCard::where("CardNumber",$req->CardNumber)->first();
+    $card = ShoppingCard::where("CardNumber",$req->CardNumber)->first();
 
-if(!$card){
-    return response()->json(["message"=>"The Card You Entered Does Not Exist"],400);
-}
+    if(!$card){
+        return response()->json(["message"=>"The Card You Entered Does Not Exist"],400);
+    }
 
-if($card->AccountHolderID != $r->UserId){
-    return response()->json(["message"=>"You are not authorised to use this card"],400);
-}
+    if($card->AccountHolderID != $r->UserId){
+        return response()->json(["message"=>"You are not authorised to use this card"],400);
+    }
 
-if($card->Amount < $formattedTotal){
-    return response()->json(["message"=>`The amount left on the card is {$card->Amount}, please top-up to continue`],400);
-}
+    if($card->Amount < $formattedTotal){
+        return response()->json(["message"=>`The amount left on the card is {$card->Amount}, please top-up to continue`],400);
+    }
 
 
 
@@ -468,12 +471,14 @@ if($card->Amount < $formattedTotal){
 
 
     $baggingId = $this->audit->IdGenerator();
+    $payId = $this->audit->IdGenerator();
 
     $m = new MasterRepo();
     $m->MasterId =  $p->OrderId;
     $m->UserId =  $p->UserId;
     $m->OrderId = $p->OrderId;
     $m->BaggingId = $baggingId;
+    $m->PaymentId =  $payId;
     $m->save();
 
     $b = new Bagging();
@@ -481,7 +486,7 @@ if($card->Amount < $formattedTotal){
     $b->UserId = $p->UserId;
     $b->OrderId = $p->OrderId;
     $b->BaggingId =  $baggingId;
-    $b->PaymentId = $this->audit->IdGenerator();
+    $b->PaymentId =  $payId;
     $b->save();
 
 
@@ -536,6 +541,33 @@ if($req->PaymentMethod == "Credit Sales"){
 
 
 
+}
+
+
+function getDistance($lat2, $lon2) {
+    $earthRadius = 6371; // Earth's radius in kilometers
+
+    // Fetch the DeliveryConfig (latitude and longitude might be stored as strings)
+    $s = DeliveryConfig::first();
+
+    // Convert latitude and longitude from string to float (decimal)
+    $lat1 = floatval($s->Latitude);
+    $lon1 = floatval($s->Longitude);
+
+    // Convert degrees to radians
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLon = deg2rad($lon2 - $lon1);
+
+    // Apply the Haversine formula
+    $a = sin($dLat / 2) * sin($dLat / 2) +
+        cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+        sin($dLon / 2) * sin($dLon / 2);
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+    // Calculate the distance
+    $distance = $earthRadius * $c;
+    $roundDistance = round($distance);
+    return $roundDistance;
 }
 
 
