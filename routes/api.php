@@ -16,6 +16,7 @@ use App\Http\Controllers\Master;
 use App\Http\Controllers\DashBoard;
 use App\Http\Controllers\APPS;
 use App\Http\Controllers\WebsiteController;
+use App\Http\Controllers\MasterControllerV1;
 
 
 
@@ -101,38 +102,51 @@ Route::post('AdminViewSingleCustomer', [CustomerController::class, 'AdminViewSin
 
 Route::get('MakePayment/{TransactionId}', [GlobalPaymentController::class, 'MakePayment']);
 
+Route::post('ViewPaymentMethods', [MasterControllerV1::class, 'ViewPaymentMethods']);
+Route::get('MakeCreditPayment/{TransactionId}', [MasterControllerV1::class, 'MakeCreditPayment']);
+Route::get('MakePaymentForShoppingCard/{TransactionId}', [MasterControllerV1::class, 'MakePaymentForShoppingCard']);
+Route::get('ConfirmCreditPayment/{TransactionId}', [MasterControllerV1::class, 'ConfirmCreditPayment']);
+Route::get('ConfirmShoppingCardPayment/{TransactionId}', [MasterControllerV1::class, 'ConfirmShoppingCardPayment']);
+Route::post('SchedulePayment', [MasterControllerV1::class, 'SchedulePayment']);
+Route::post('CardInformation', [MasterControllerV1::class, 'CardInformation']);
+Route::post('CardTopupHistory', [MasterControllerV1::class, 'CardTopupHistory']);
+
+
+
+
+
 
 
 Route::middleware([CustomerAuthenticator::class])->group(function () {
 
-/**********************************************
- *                                            *
- *   💳 PAYMENT ROUTES                        *
- *                                            *
- **********************************************/
+    /**********************************************
+     *                                            *
+     *   💳 PAYMENT ROUTES                        *
+     *                                            *
+     **********************************************/
 
-/**********************************************
- *                                            *
- *   🧍 CUSTOMERS ROUTES                      *
- *                                            *
- **********************************************/
-Route::post('UpdateCustomer', [CustomerController::class, 'UpdateCustomer']);
-Route::post('ViewSingleCustomer', [CustomerController::class, 'ViewSingleCustomer']);
+    /**********************************************
+     *                                            *
+     *   🧍 CUSTOMERS ROUTES                      *
+     *                                            *
+     **********************************************/
+    Route::post('UpdateCustomer', [CustomerController::class, 'UpdateCustomer']);
+    Route::post('ViewSingleCustomer', [CustomerController::class, 'ViewSingleCustomer']);
 
-Route::post('AddToCart', [CartOrderPayment::class, 'AddToCart']);
-Route::post('UpdateCart', [CartOrderPayment::class, 'UpdateCart']);
-Route::post('ViewAllCart', [CartOrderPayment::class, 'ViewAllCart']);
-Route::post('DeleteCart', [CartOrderPayment::class, 'DeleteCart']);
+    Route::post('AddToCart', [CartOrderPayment::class, 'AddToCart']);
+    Route::post('UpdateCart', [CartOrderPayment::class, 'UpdateCart']);
+    Route::post('ViewAllCart', [CartOrderPayment::class, 'ViewAllCart']);
+    Route::post('DeleteCart', [CartOrderPayment::class, 'DeleteCart']);
 
-Route::post('AddToOrder', [CartOrderPayment::class, 'AddToOrder']);
-Route::post('ViewAllOrder', [CartOrderPayment::class, 'ViewAllOrder']);
-Route::post('DetailedOrder', [CartOrderPayment::class, 'DetailedOrder']);
-Route::post('EditProductInDetailedOrder', [CartOrderPayment::class, 'EditProductInDetailedOrder']);
-Route::post('DeleteProductInDetailedOrder', [CartOrderPayment::class, 'DeleteProductInDetailedOrder']);
+    Route::post('AddToOrder', [CartOrderPayment::class, 'AddToOrder']);
+    Route::post('ViewAllOrder', [CartOrderPayment::class, 'ViewAllOrder']);
+    Route::post('DetailedOrder', [CartOrderPayment::class, 'DetailedOrder']);
+    Route::post('EditProductInDetailedOrder', [CartOrderPayment::class, 'EditProductInDetailedOrder']);
+    Route::post('DeleteProductInDetailedOrder', [CartOrderPayment::class, 'DeleteProductInDetailedOrder']);
 
-Route::post('AddDeliveryDetails', [CartOrderPayment::class, 'AddDeliveryDetails']);
-Route::post('GetTotalPaymentAmount', [CartOrderPayment::class, 'GetTotalPaymentAmount']);
-Route::post('GetCustNotification', [CartOrderPayment::class, 'GetCustNotification']);
+    Route::post('AddDeliveryDetails', [CartOrderPayment::class, 'AddDeliveryDetails']);
+    Route::post('GetTotalPaymentAmount', [CartOrderPayment::class, 'GetTotalPaymentAmount']);
+    Route::post('GetCustNotification', [CartOrderPayment::class, 'GetCustNotification']);
 
 
 
@@ -249,6 +263,17 @@ Route::post('CreateWebsite', [WebsiteController::class, 'CreateWebsite']);
  Route::post('DetailedAllOrder', [CartOrderPayment::class, 'DetailedAllOrder']);
  Route::post('ViewGlobalDelivery', [BaggingCheckerDelivery::class, 'ViewGlobalDelivery']);
 
+
+ Route::post('PaymentMethods', [MasterControllerV1::class, 'PaymentMethods']);
+ Route::post('DeletePaymentMethods', [MasterControllerV1::class, 'DeletePaymentMethods']);
+ Route::post('ViewAwaitingCreditSales', [MasterControllerV1::class, 'ViewAwaitingCreditSales']);
+ Route::post('AcceptCreditSales', [MasterControllerV1::class, 'AcceptCreditSales']);
+ Route::post('RejectCreditSales', [MasterControllerV1::class, 'RejectCreditSales']);
+ Route::post('ScheduleSinglePayment', [MasterControllerV1::class, 'ScheduleSinglePayment']);
+ Route::post('ScheduleShoppingCard', [MasterControllerV1::class, 'ScheduleShoppingCard']);
+ Route::post('DeliveryConfig', [MasterControllerV1::class, 'DeliveryConfig']);
+ Route::post('RunPromotion', [MasterControllerV1::class, 'RunPromotion']);
+ Route::post('RevertPromotion', [MasterControllerV1::class, 'RevertPromotion']);
 
 
 

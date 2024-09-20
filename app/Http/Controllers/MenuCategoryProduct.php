@@ -8,6 +8,7 @@ use App\Models\Menu;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImages;
+use Carbon\Carbon;
 
 class MenuCategoryProduct extends Controller
 {
@@ -438,11 +439,30 @@ function UpdateProduct(Request $req){
 
 }
 
-function ViewProduct(Request $req){
+public function ViewProduct(Request $req){
     $this->audit->RateLimit($req->ip());
-    $s = Product::where("Quantity",">",0)->get();
-    return $s;
+
+    $currentDate = Carbon::now();
+
+    // Fetch all products with quantity greater than 0
+    $products = Product::where("Quantity", ">", 0)->get();
+
+    // Iterate through the products and check if the ValidUntil date has passed
+    foreach ($products as $product) {
+        if ($product->ValidUntil && $currentDate->gt($product->ValidUntil)) {
+            // If current date is greater than ValidUntil, reset discount-related fields
+            $product->DiscountPrice = 0;
+            $product->DiscountPercentage = 0;
+            $product->ValidUntil = null;
+            // Save the product
+            $product->save();
+        }
+    }
+
+    // Return all the products
+    return $products;
 }
+
 
 function ViewProductAdmin(Request $req){
     $this->audit->RateLimit($req->ip());

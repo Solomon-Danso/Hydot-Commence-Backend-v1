@@ -348,7 +348,7 @@ public function ScheduleSinglePayment(Request $req){
 
 
 
-public function MakePayment($TransactionId)
+public function MakeCreditPayment($TransactionId)
 {
     $sales = CollectionPaymentHistory::where("TransactionId", $TransactionId)->first();
     if (!$sales) {
@@ -571,61 +571,6 @@ public function MakePaymentForShoppingCard($TransactionId)
 }
 
 
-function ConfirmShoppingCardPaymentOld($TransactionId)
-{
-
-    $c = ShoppingCardCollector::where("TransactionId", $TransactionId)->first();
-    if (!$c) {
-        return response()->json(["message" => "Transaction not found"], 400);
-    }
-
-    $c->Status = "Confirmed";
-
-    $checker = ShoppingCard::where("CardNumber", $c->CardNumber)->first();
-    if($checker){
-        $checker->Amount = $checker->Amount + $c->Amount;
-        $saver = $checker->save();
-    }else{
-
-        $s = new ShoppingCard();
-        $s->PurchasedByID = $c->PurchasedByID;
-        $s->Amount = $c->Amount;
-        $s->AccountHolderID = $c->AccountHolderID;
-        $s->AccountHolderName = $c->AccountHolderName;
-        $s->CardNumber = $c->CardNumber;
-        $saver = $s->save();
-    }
-
-
-    $p = new Payment();
-    $p->OrderId = "Shopping Card";
-    $p->Phone = `For: {$c->PurchasedByID}`;
-    $p->Email = $c->Email;
-    $p->AmountPaid =  $c->Amount;
-    $p->UserId = $c->PurchasedByID;
-
-
-    $cSaver = $c->save();
-    $pSaver = $p->save();
-
-    if( $cSaver & $pSaver & $saver ){
-        $message = "A payment of ".$c->Amount." has been made for a shopping card topup"."by ".$p->UserId;
-        $this->audit->CustomerAuditor($p->UserId, $message);
-        return response()->json(["message"=>"Operation was successful"],200);
-
-    }
-    else{
-        return response()->json(["message"=>"Operation was unsuccessful"],400);
-    }
-
-
-
-
-
-
-
-
-}
 
 
 function ConfirmShoppingCardPayment($TransactionId)
@@ -686,7 +631,7 @@ function CardTopupHistory(Request $req){
 }
 
 function CardInformation(Request $req){
-    $sales = ShoppingCard::where("CardNumber", $req->CardNumber)->get();
+    $sales = ShoppingCard::where("CardNumber", $req->CardNumber)->first();
     return $sales;
 }
 
@@ -774,14 +719,6 @@ function RevertPromotion(Request $req){
 
 
 
-
-//TODO:
-/*
-1. Configure Payment method to be accessible with Card [Done]
-2. Delivery Price Calculations [Done]
-3. Discount On Selected Products
-
-*/
 
 
 
