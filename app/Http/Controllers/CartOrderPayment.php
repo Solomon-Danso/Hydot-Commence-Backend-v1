@@ -354,6 +354,19 @@ function EditProductInDetailedOrder(Request $req){
 
 function AddDeliveryDetails(Request $req){
         $this->audit->RateLimit($req->ip());
+
+        $userAddress = "{$req->Country}, {$req->Region}, {$req->City}, {$req->DetailedAddress}";
+
+        // Get the road distance using the Google Maps API
+        $distance = $this->getRoadDistance($userAddress);
+
+        // If distance is not returned (i.e., invalid location)
+        if (!$distance) {
+            return response()->json(["message" => "Invalid location. Please verify the spelling and try again."], 400);
+        }
+
+
+
         $r = Customer::where("UserId", $req->UserId)->first();
         if (!$r) {
             return response()->json(["message" => "Customer does not exist"], 400);
@@ -408,7 +421,8 @@ function AddDeliveryDetails(Request $req){
         $total = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->sum(DB::raw('Price * Quantity'));
 
 
-    $distance = $this->getRoadDistance($req->Latitude, $req->Longitude);
+
+
 
     $q = DeliveryConfig::first();
         $shipping =  $distance * $q->PricePerKm;
@@ -416,179 +430,188 @@ function AddDeliveryDetails(Request $req){
         $formattedTotal = number_format($totalPay, 2, '.', '');
 
 
-if($req->PaymentMethod == "Mobile Money or Credit Card"){
+    if($req->PaymentMethod == "Mobile Money or Credit Card"){
 
-    $p = new Payment();
-    $p->OrderId = $req->OrderId;
-    $p->Phone = $r->Phone;
-    $p->Email = $r->Email;
-    $p->AmountPaid = $formattedTotal;
-    $p->UserId = $req->UserId;
+        $p = new Payment();
+        $p->OrderId = $req->OrderId;
+        $p->Phone = $r->Phone;
+        $p->Email = $r->Email;
+        $p->AmountPaid = $formattedTotal;
+        $p->UserId = $req->UserId;
 
-    $saver = $p->save();
+        $saver = $p->save();
 
-    if($saver){
-        $message = $req->OrderId." order has been placed";
-        $this->audit->CustomerAuditor($req->UserId, $message);
-        return response()->json(["message"=>"Your location information has been sent"], 200);
-    }else{
+        if($saver){
+            $message = $req->OrderId." order has been placed";
+            $this->audit->CustomerAuditor($req->UserId, $message);
+            return response()->json(["message"=>"Your location information has been sent"], 200);
+        }else{
 
-        return response()->json(["message"=>"Failed to Process Order"], 400);
+            return response()->json(["message"=>"Failed to Process Order"], 400);
+
+        }
+
+
+
 
     }
 
+    if($req->PaymentMethod == "Shopping Card"){
+
+        $card = ShoppingCard::where("CardNumber",$req->CardNumber)->first();
+
+        if(!$card){
+            return response()->json(["message"=>"The Card You Entered Does Not Exist"],400);
+        }
+
+        if($card->AccountHolderID != $r->UserId){
+            return response()->json(["message"=>"You are not authorised to use this card"],400);
+        }
+
+        if($card->Amount < $formattedTotal){
+            return response()->json(["message"=>`The amount left on the card is {$card->Amount}, please top-up to continue`],400);
+        }
+
+
+
+
+        $p = new Payment();
+        $p->OrderId = $req->OrderId;
+        $p->Phone = $r->Phone;
+        $p->Email = $r->Email;
+        $p->AmountPaid = $formattedTotal;
+        $p->UserId = $card->AccountHolderID;
+
+        $saver = $p->save();
+
+        $card->Amount = $card->Amount-$formattedTotal;
+        $card->save();
+
+
+        $baggingId = $this->audit->IdGenerator();
+        $payId = $this->audit->IdGenerator();
+
+        $m = new MasterRepo();
+        $m->MasterId =  $p->OrderId;
+        $m->UserId =  $p->UserId;
+        $m->OrderId = $p->OrderId;
+        $m->BaggingId = $baggingId;
+        $m->PaymentId =  $payId;
+        $m->save();
+
+        $b = new Bagging();
+        $b->MasterId = $p->OrderId;
+        $b->UserId = $p->UserId;
+        $b->OrderId = $p->OrderId;
+        $b->BaggingId =  $baggingId;
+        $b->PaymentId =  $payId;
+        $b->save();
+
+
+
+
+
+        if($saver){
+            $message = $req->OrderId." order has been placed";
+            $this->audit->CustomerAuditor($req->UserId, $message);
+            return response()->json(["message"=>"Your location information has been sent"], 200);
+        }else{
+
+            return response()->json(["message"=>"Failed to Process Order"], 400);
+
+        }
+
+
+
+
+    }
+
+
+    if($req->PaymentMethod == "Credit Sales"){
+
+        $p = new CreditSales();
+        $p->OrderId = $req->OrderId;
+        $p->ReferenceId = $this->audit->ProformaIdGenerator();
+        $p->Phone = $r->Phone;
+        $p->Email = $r->Email;
+        $p->CreditAmount = $formattedTotal;
+        $p->UserId = $r->UserId;
+        $p->FullName = $r->userName;
+        $p->DigitalAddress = $req->DigitalAddress;
+        $p->NationalIDType = $req->NationalIDType;
+        $p->NationalID = $req->NationalID;
+
+        $saver = $p->save();
+
+        if($saver){
+            $message = $req->OrderId." order has been placed";
+            $this->audit->CustomerAuditor($req->UserId, $message);
+            return response()->json(["message"=>"Your order has been processed, awaiting approval"], 200);
+        }else{
+
+            return response()->json(["message"=>"Failed to Process Order"], 400);
+
+        }
+
+
+
+    }
 
 
 
 }
 
-if($req->PaymentMethod == "Shopping Card"){
 
-    $card = ShoppingCard::where("CardNumber",$req->CardNumber)->first();
+function getRoadDistance($userAddress) {
 
-    if(!$card){
-        return response()->json(["message"=>"The Card You Entered Does Not Exist"],400);
-    }
-
-    if($card->AccountHolderID != $r->UserId){
-        return response()->json(["message"=>"You are not authorised to use this card"],400);
-    }
-
-    if($card->Amount < $formattedTotal){
-        return response()->json(["message"=>`The amount left on the card is {$card->Amount}, please top-up to continue`],400);
-    }
+    $apiKey = env('GOOGLE_MAPS_API_KEY');  // Replace with your actual API Key
 
 
+    $deliveryConfig = DeliveryConfig::first();
 
+    // URL to get geocode information
+    $geocodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($userAddress) . "&key=" . $apiKey;
 
-    $p = new Payment();
-    $p->OrderId = $req->OrderId;
-    $p->Phone = $r->Phone;
-    $p->Email = $r->Email;
-    $p->AmountPaid = $formattedTotal;
-    $p->UserId = $card->AccountHolderID;
-
-    $saver = $p->save();
-
-    $card->Amount = $card->Amount-$formattedTotal;
-    $card->save();
-
-
-    $baggingId = $this->audit->IdGenerator();
-    $payId = $this->audit->IdGenerator();
-
-    $m = new MasterRepo();
-    $m->MasterId =  $p->OrderId;
-    $m->UserId =  $p->UserId;
-    $m->OrderId = $p->OrderId;
-    $m->BaggingId = $baggingId;
-    $m->PaymentId =  $payId;
-    $m->save();
-
-    $b = new Bagging();
-    $b->MasterId = $p->OrderId;
-    $b->UserId = $p->UserId;
-    $b->OrderId = $p->OrderId;
-    $b->BaggingId =  $baggingId;
-    $b->PaymentId =  $payId;
-    $b->save();
-
-
-
-
-
-    if($saver){
-        $message = $req->OrderId." order has been placed";
-        $this->audit->CustomerAuditor($req->UserId, $message);
-        return response()->json(["message"=>"Your location information has been sent"], 200);
-    }else{
-
-        return response()->json(["message"=>"Failed to Process Order"], 400);
-
-    }
-
-
-
-
-}
-
-
-if($req->PaymentMethod == "Credit Sales"){
-
-    $p = new CreditSales();
-    $p->OrderId = $req->OrderId;
-    $p->ReferenceId = $this->audit->ProformaIdGenerator();
-    $p->Phone = $r->Phone;
-    $p->Email = $r->Email;
-    $p->CreditAmount = $formattedTotal;
-    $p->UserId = $r->UserId;
-    $p->FullName = $r->userName;
-    $p->DigitalAddress = $req->DigitalAddress;
-    $p->NationalIDType = $req->NationalIDType;
-    $p->NationalID = $req->NationalID;
-
-    $saver = $p->save();
-
-    if($saver){
-        $message = $req->OrderId." order has been placed";
-        $this->audit->CustomerAuditor($req->UserId, $message);
-        return response()->json(["message"=>"Your order has been processed, awaiting approval"], 200);
-    }else{
-
-        return response()->json(["message"=>"Failed to Process Order"], 400);
-
-    }
-
-
-
-}
-
-
-
-}
-
-
-function getRoadDistance($lat2, $lon2) {
-    $apiKey = 'AIzaSyBLQDahpOTNXebv2C3yywMkp9fSvAuu2Xg';  // Your Google Maps API Key
-
-    $s = DeliveryConfig::first();
-
-    // Convert latitude and longitude from string to float (decimal)
-    $lat1 = floatval($s->Latitude);
-    $lon1 = floatval($s->Longitude);
-
-    // Google Maps Distance Matrix API URL for driving distance
-    $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$lat1},{$lon1}&destinations={$lat2},{$lon2}&mode=driving&key={$apiKey}";
-
-    // Initialize cURL session
     $ch = curl_init();
-
-    // Set the URL and options for cURL
-    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_URL, $geocodeUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-    // Execute the cURL request and get the response
-    $response = curl_exec($ch);
-
-    // Close the cURL session
+    $geocodeResponse = curl_exec($ch);
     curl_close($ch);
 
-    // Decode the JSON response
-    $data = json_decode($response, true);
+    $geocodeData = json_decode($geocodeResponse, true);
 
-    // Check if the response contains valid distance information
-    if (isset($data['rows'][0]['elements'][0]['distance']['value'])) {
-        // Extract the distance (in meters)
-        $distanceInMeters = $data['rows'][0]['elements'][0]['distance']['value'];
-
-        // Convert meters to kilometers
-        $distanceInKm = $distanceInMeters / 1000;
-
-        return round($distanceInKm, 2); // Return the distance in kilometers rounded to 2 decimal places
-    } else {
-        return "Unable to calculate road distance.";
+    // If invalid location
+    if (!isset($geocodeData['results'][0]['geometry']['location'])) {
+        return false;
     }
+
+    $userLat = $geocodeData['results'][0]['geometry']['location']['lat'];
+    $userLon = $geocodeData['results'][0]['geometry']['location']['lng'];
+    $fixedLat = floatval($deliveryConfig->Latitude);
+    $fixedLon = floatval($deliveryConfig->Longitude);
+
+    // Google Maps Distance Matrix API URL
+    $distanceUrl = "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$userLat},{$userLon}&destinations={$fixedLat},{$fixedLon}&mode=driving&key=" . $apiKey;
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $distanceUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $distanceResponse = curl_exec($ch);
+    curl_close($ch);
+
+    $distanceData = json_decode($distanceResponse, true);
+
+    // If invalid distance data
+    if (!isset($distanceData['rows'][0]['elements'][0]['distance']['value'])) {
+        return false;
+    }
+
+    // Convert meters to kilometers
+    $distanceInMeters = $distanceData['rows'][0]['elements'][0]['distance']['value'];
+    return round($distanceInMeters / 1000, 2);
 }
+
+
 
 
 
