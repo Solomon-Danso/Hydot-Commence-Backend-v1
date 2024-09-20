@@ -87,7 +87,7 @@ function AddToCart(Request $req){
             $s->ProductId = $p->ProductId;
             $s->Picture = $p->Picture;
             $s->Title = $p->Title;
-            
+
             if($p->DiscountPrice>0){
                 $s->Price = $p->DiscountPrice;
             }else{
@@ -408,7 +408,7 @@ function AddDeliveryDetails(Request $req){
         $total = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->sum(DB::raw('Price * Quantity'));
 
 
-    $distance = $this->getDistance($req->Latitude, $req->Longitude);
+    $distance = $this->getRoadDistance($req->Latitude, $req->Longitude);
 
     $q = DeliveryConfig::first();
         $shipping =  $distance * $q->PricePerKm;
@@ -545,6 +545,48 @@ if($req->PaymentMethod == "Credit Sales"){
 
 
 
+}
+
+function getRoadDistance($lat2, $lon2) {
+    // OSRM API URL for driving distance between two locations
+
+    $s = DeliveryConfig::first();
+
+    // Convert latitude and longitude from string to float (decimal)
+    $lat1 = floatval($s->Latitude);
+    $lon1 = floatval($s->Longitude);
+
+
+    $url = "http://router.project-osrm.org/route/v1/driving/{$lon1},{$lat1};{$lon2},{$lat2}?overview=false";
+
+    // Initialize cURL session
+    $ch = curl_init();
+
+    // Set the URL and options for cURL
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+    // Execute the cURL request and get the response
+    $response = curl_exec($ch);
+
+    // Close the cURL session
+    curl_close($ch);
+
+    // Decode the JSON response
+    $data = json_decode($response, true);
+
+    // Check if the response contains routes
+    if (isset($data['routes']) && isset($data['routes'][0]['distance'])) {
+        // Extract the distance (in meters)
+        $distanceInMeters = $data['routes'][0]['distance'];
+
+        // Convert meters to kilometers
+        $distanceInKm = $distanceInMeters / 1000;
+
+        return round($distanceInKm, 2); // Return the distance in kilometers rounded to 2 decimal places
+    } else {
+        return "Unable to calculate road distance.";
+    }
 }
 
 
