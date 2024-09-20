@@ -524,6 +524,7 @@ function RoleList(Request $req){
     "Can_Configure_Website",
     "Can_Configure_Delivery",
     "Can_Run_Promotion",
+    "Can_Configure_System",
 
 
 
@@ -545,16 +546,16 @@ function PaymentMethodsList(Request $req){
 
 
     $PaymentList = [
+
    "Mobile Money or Card",
    "Payment On Delivery",
-   "Credit Sales",
-   "Coupon",
-   "Voucher",
+    "Credit Sales",
+    "Shopping Card",
     ];
 
     sort($PaymentList);
 
-    return response()->json(["message"=>$PaymentList],200);
+    return $PaymentList;
 
 
 }

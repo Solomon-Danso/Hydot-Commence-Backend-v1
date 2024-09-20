@@ -272,6 +272,8 @@ Route::post('CreateWebsite', [WebsiteController::class, 'CreateWebsite']);
  Route::post('ScheduleSinglePayment', [MasterControllerV1::class, 'ScheduleSinglePayment']);
  Route::post('ScheduleShoppingCard', [MasterControllerV1::class, 'ScheduleShoppingCard']);
  Route::post('DeliveryConfig', [MasterControllerV1::class, 'DeliveryConfig']);
+ Route::post('ViewDeliveryConfig', [MasterControllerV1::class, 'ViewDeliveryConfig']);
+
  Route::post('RunPromotion', [MasterControllerV1::class, 'RunPromotion']);
  Route::post('RevertPromotion', [MasterControllerV1::class, 'RevertPromotion']);
 

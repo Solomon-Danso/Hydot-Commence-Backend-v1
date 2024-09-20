@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuditTrialController;
-use App\Model\PaymentConfiguration;
+use App\Models\PaymentConfiguration;
 use App\Models\CreditSales;
 use App\Models\HirePurchase;
 use App\Models\CollectionAccount;
@@ -35,10 +35,23 @@ class MasterControllerV1 extends Controller
 
     }
 
+/*
+Todo:
+If it is payment on delivery,
+(1)Payment needs to be made before the token will be sent to client
+(2)A function to make sure the user with the role Can_Handle_PaymentOnDelivery to input the amount
+(3)A function to manually input the amount for the Order, If less throw an error and log the user details
+(4)A special Auditor only to monitor fraudulent activity
+(5)Payment on delivery needs to be approved by the Super Admin only
+
+*/
+
+
+
 function PaymentMethods(Request $req){
 
         $this->audit->RateLimit($req->ip());
-        $rp= $this->audit->RoleAuthenticator($req->AdminId, "Can_Configure_PaymentMethods");
+        $rp= $this->audit->RoleAuthenticator($req->AdminId, "Can_Configure_System");
         if ($rp->getStatusCode() !== 200) {
             return $rp;  // Return the authorization failure response
         }
@@ -76,7 +89,7 @@ function ViewPaymentMethods(){
 
 function DeletePaymentMethods(Request $req){
         $this->audit->RateLimit($req->ip());
-        $rp= $this->audit->RoleAuthenticator($req->AdminId, "Can_Configure_PaymentMethods");
+        $rp= $this->audit->RoleAuthenticator($req->AdminId, "Can_Configure_System");
         if ($rp->getStatusCode() !== 200) {
             return $rp;  // Return the authorization failure response
         }
@@ -635,29 +648,78 @@ function CardInformation(Request $req){
     return $sales;
 }
 
-
-function DeliveryConfig(Request $req){
-
+public function DeliveryConfig(Request $req)
+{
+    // Rate limit based on IP
     $this->audit->RateLimit($req->ip());
-   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Configure_Delivery");
-   if ($rp->getStatusCode() !== 200) {
-    return $rp;  // Return the authorization failure response
+
+    // Role authentication
+    $rp = $this->audit->RoleAuthenticator($req->AdminId, "Can_Configure_Delivery");
+    if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
     }
 
+    // Fetch latitude and longitude from the address using getLatnLong function
+    $locationData = $this->getLatnLong($req->Location);
+
+    if (!$locationData) {
+        // If location data could not be fetched
+        return response()->json(["message" => "Invalid Location Provided"], 400);
+    }
+
+    // Update or create the DeliveryConfig
     $s = DeliveryConfig::firstOrNew();
-    $s->Latitude = $req->Latitude;
-    $s->Longitude = $req->Longitude;
+    $s->Latitude = $locationData['lat'];  // Set latitude from geocoding response
+    $s->Longitude = $locationData['lon'];  // Set longitude from geocoding response
+
     $s->PricePerKm = $req->PricePerKm;
+    $s->Location = $req->Location;
+
     $saver = $s->save();
 
-    if($saver){
-        return response()->json(["message"=>"Price Configured Successfully"],200);
-    }else{
-        return response()->json(["message"=>"Price Configuration Failed"],200);
+    if ($saver) {
+        return response()->json(["message" => "Price Configured Successfully"], 200);
+    } else {
+        return response()->json(["message" => "Price Configuration Failed"], 500);
+    }
+}
+
+function ViewDeliveryConfig(){
+    $s = DeliveryConfig::get();
+    return $s;
+}
+
+
+
+
+public function getLatnLong($userAddress)
+{
+    $apiKey = env('GOOGLE_MAPS_API_KEY');
+    $geocodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($userAddress) . "&key=" . $apiKey;
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $geocodeUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $geocodeResponse = curl_exec($ch);
+    curl_close($ch);
+
+    $geocodeData = json_decode($geocodeResponse, true);
+
+    if (!isset($geocodeData['results'][0]['geometry']['location'])) {
+        return false;
     }
 
+    $userLat = $geocodeData['results'][0]['geometry']['location']['lat'];
+    $userLon = $geocodeData['results'][0]['geometry']['location']['lng'];
 
+    return [
+        "lat" => $userLat,
+        "lon" => $userLon,
+    ];
 }
+
+
+
 
 function RunPromotion(Request $req){
 
