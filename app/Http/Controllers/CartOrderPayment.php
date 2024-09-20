@@ -547,8 +547,9 @@ if($req->PaymentMethod == "Credit Sales"){
 
 }
 
+
 function getRoadDistance($lat2, $lon2) {
-    // OSRM API URL for driving distance between two locations
+    $apiKey = 'AIzaSyBLQDahpOTNXebv2C3yywMkp9fSvAuu2Xg';  // Your Google Maps API Key
 
     $s = DeliveryConfig::first();
 
@@ -556,8 +557,8 @@ function getRoadDistance($lat2, $lon2) {
     $lat1 = floatval($s->Latitude);
     $lon1 = floatval($s->Longitude);
 
-
-    $url = "http://router.project-osrm.org/route/v1/driving/{$lon1},{$lat1};{$lon2},{$lat2}?overview=false";
+    // Google Maps Distance Matrix API URL for driving distance
+    $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$lat1},{$lon1}&destinations={$lat2},{$lon2}&mode=driving&key={$apiKey}";
 
     // Initialize cURL session
     $ch = curl_init();
@@ -575,10 +576,10 @@ function getRoadDistance($lat2, $lon2) {
     // Decode the JSON response
     $data = json_decode($response, true);
 
-    // Check if the response contains routes
-    if (isset($data['routes']) && isset($data['routes'][0]['distance'])) {
+    // Check if the response contains valid distance information
+    if (isset($data['rows'][0]['elements'][0]['distance']['value'])) {
         // Extract the distance (in meters)
-        $distanceInMeters = $data['routes'][0]['distance'];
+        $distanceInMeters = $data['rows'][0]['elements'][0]['distance']['value'];
 
         // Convert meters to kilometers
         $distanceInKm = $distanceInMeters / 1000;
@@ -589,32 +590,6 @@ function getRoadDistance($lat2, $lon2) {
     }
 }
 
-
-function getDistance($lat2, $lon2) {
-    $earthRadius = 6371; // Earth's radius in kilometers
-
-    // Fetch the DeliveryConfig (latitude and longitude might be stored as strings)
-    $s = DeliveryConfig::first();
-
-    // Convert latitude and longitude from string to float (decimal)
-    $lat1 = floatval($s->Latitude);
-    $lon1 = floatval($s->Longitude);
-
-    // Convert degrees to radians
-    $dLat = deg2rad($lat2 - $lat1);
-    $dLon = deg2rad($lon2 - $lon1);
-
-    // Apply the Haversine formula
-    $a = sin($dLat / 2) * sin($dLat / 2) +
-        cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-        sin($dLon / 2) * sin($dLon / 2);
-    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-    // Calculate the distance
-    $distance = $earthRadius * $c;
-    $roundDistance = round($distance);
-    return $roundDistance;
-}
 
 
     function DeleteProductInDetailedOrder(Request $req){
