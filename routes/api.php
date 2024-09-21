@@ -261,6 +261,8 @@ Route::post('CreateWebsite', [WebsiteController::class, 'CreateWebsite']);
  Route::post('ViewDeliveredOrders', [BaggingCheckerDelivery::class, 'ViewDeliveredOrders']);
 
  Route::post('DetailedAllOrder', [CartOrderPayment::class, 'DetailedAllOrder']);
+ Route::post('DetailedPaymentFromOrder', [CartOrderPayment::class, 'DetailedPaymentFromOrder']);
+
  Route::post('ViewGlobalDelivery', [BaggingCheckerDelivery::class, 'ViewGlobalDelivery']);
 
 

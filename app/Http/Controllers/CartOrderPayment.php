@@ -306,6 +306,18 @@ function ViewAllOrder(Request $req)
 
 }
 
+function DetailedPaymentFromOrder(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $s = Payment::where("OrderId", $req->OrderId)->first();
+    $message = "Viewed details payment of the order ".$req->OrderId;
+    $this->audit->Auditor($req->AdminId, $message);
+
+    return $s;
+
+}
+
+
+
 function EditProductInDetailedOrder(Request $req){
         $this->audit->RateLimit($req->ip());
         $s = Order::where("UserId", $req->UserId)->where("ProductId", $req->ProductId)->first();
@@ -511,6 +523,26 @@ function AddDeliveryDetails(Request $req){
         $b->save();
 
 
+        $orderList = Order::where("UserId", $r->UserId)->where("OrderId", $req->OrderId)->get();
+
+        foreach($orderList as $o){
+            $product = Product::where("ProductId", $o->ProductId)->first();
+            if(!$product){
+                return response()->json(["message"=>"Invalid Product in your order"],400);
+            }
+
+            $product->Quantity = $product->Quantity - $o->Quantity;
+            $product->PurchaseCounter = $product->PurchaseCounter+1;
+            $product->save();
+
+            $o->OrderStatus = "awaiting delivery";
+            $o->save();
+
+        }
+
+
+
+
 
 
 
@@ -546,6 +578,25 @@ function AddDeliveryDetails(Request $req){
 
         $saver = $p->save();
 
+        $orderList = Order::where("UserId", $r->UserId)->where("OrderId", $req->OrderId)->get();
+
+        foreach($orderList as $o){
+            $product = Product::where("ProductId", $o->ProductId)->first();
+            if(!$product){
+                return response()->json(["message"=>"Invalid Product in your order"],400);
+            }
+
+            $product->Quantity = $product->Quantity - $o->Quantity;
+            $product->PurchaseCounter = $product->PurchaseCounter+1;
+            $product->save();
+
+            $o->OrderStatus = "awaiting delivery";
+            $o->save();
+
+        }
+
+
+
         if($saver){
             $message = $req->OrderId." order has been placed";
             $this->audit->CustomerAuditor($req->UserId, $message);
@@ -562,15 +613,17 @@ function AddDeliveryDetails(Request $req){
 
     if($req->PaymentMethod == "Payment On Delivery"){
 
-        $poD = new PaymentOnDelivery([
-            'OrderId' => $req->OrderId,
-            'PaymentOnDeliveryID' => $this->audit->IdGenerator(),
-            'Phone' => $r->Phone,
-            'Email' => $r->Email,
-            'Amount' => $formattedTotal,
-            'UserId' => $r->UserId,
-            'FullName'=>$r->Username,
-        ]);
+        $poD = new PaymentOnDelivery();
+
+        $poD->OrderId = $req->OrderId;
+        $poD->PaymentOnDeliveryID = $this->audit->IdGenerator();
+        $poD->Phone = $r->Phone;
+        $poD->Email = $r->Email;
+        $poD->Amount = $formattedTotal;
+        $poD->UserId = $r->UserId;
+        $poD->FullName = $r->Username;
+        $poD->save();
+
 
 
 
@@ -581,6 +634,7 @@ function AddDeliveryDetails(Request $req){
         $p->AmountPaid = $formattedTotal;
         $p->UserId = $r->UserId;
         $p->Status = "confirmed";
+        $p->ReferenceId = "Payment On Delivery";
 
         $saver = $p->save();
 
@@ -603,6 +657,23 @@ function AddDeliveryDetails(Request $req){
         $b->BaggingId =  $baggingId;
         $b->PaymentId =  $payId;
         $b->save();
+
+        $orderList = Order::where("UserId", $p->UserId)->where("OrderId", $p->OrderId)->get();
+
+        foreach($orderList as $o){
+            $product = Product::where("ProductId", $o->ProductId)->first();
+            if(!$product){
+                return response()->json(["message"=>"Invalid Product in your order"],400);
+            }
+
+            $product->Quantity = $product->Quantity - $o->Quantity;
+            $product->PurchaseCounter = $product->PurchaseCounter+1;
+            $product->save();
+
+            $o->OrderStatus = "awaiting delivery";
+            $o->save();
+
+        }
 
 
 
@@ -735,7 +806,7 @@ function getRoadDistance($userAddress) {
 
         $userAddress = "{$req->Country}, {$req->Region}, {$req->City}, {$req->DetailedAddress}";
 
-       
+
         // Get the road distance using the Google Maps API
         $distance = $this->getRoadDistance($userAddress);
 

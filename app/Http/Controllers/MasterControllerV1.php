@@ -615,14 +615,16 @@ function ConfirmShoppingCardPayment($TransactionId)
     $saver = $checker->save();
 
     // Create a payment record
-    $p = new Payment([
-        'OrderId' => "Shopping Card",
-        'Phone' => "For: {$c->PurchasedByID}",
-        'Email' => $c->Email,
-        'AmountPaid' => $c->Amount,
-        'UserId' => $c->PurchasedByID,
-        "Status" => "confirmed"
-    ]);
+    $p = new Payment();
+
+    $p->OrderId = "Shopping Card";
+    $p->Phone = "For: {$c->PurchasedByID}";
+    $p->Email = $c->Email;
+    $p->AmountPaid = $c->Amount;
+    $p->UserId = $c->PurchasedByID;
+    $p->Status = "confirmed";
+
+
 
     // Save both the collector and payment records
     $cSaver = $c->save();
