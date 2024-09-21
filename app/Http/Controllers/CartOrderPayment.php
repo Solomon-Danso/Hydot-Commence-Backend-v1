@@ -299,12 +299,68 @@ function ViewAllOrder(Request $req)
     function DetailedAllOrder(Request $req){
         $this->audit->RateLimit($req->ip());
         $s = Order::where("OrderId", $req->OrderId)->get();
+
+
         $message = "Viewed details of the order ".$req->OrderId;
         $this->audit->Auditor($req->AdminId, $message);
 
         return $s;
 
 }
+
+function UseGoogleMap(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $s = Order::where("OrderId", $req->OrderId)->first();
+
+    $userAddress = "{$s->Country}, {$s->Region}, {$s->City}, {$s->DetailedAddress}";
+
+    $u = $this->getGoogleMapRoute($userAddress);
+    $final = [
+        "Link"=>$u
+    ];
+
+    return $final;
+
+}
+
+
+function getGoogleMapRoute($userAddress) {
+    $apiKey = env('GOOGLE_MAPS_API_KEY');  // Your Google Maps API Key
+
+    $deliveryConfig = DeliveryConfig::first();
+
+    // URL to get geocode information for the user's address
+    $geocodeUrl = "https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($userAddress) . "&key=" . $apiKey;
+
+    // Initialize cURL to fetch geocode data
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $geocodeUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $geocodeResponse = curl_exec($ch);
+    curl_close($ch);
+
+    $geocodeData = json_decode($geocodeResponse, true);
+
+    // If invalid location
+    if (!isset($geocodeData['results'][0]['geometry']['location'])) {
+        return false;
+    }
+
+    // Extract user's latitude and longitude from the geocode data
+    $userLat = $geocodeData['results'][0]['geometry']['location']['lat'];
+    $userLon = $geocodeData['results'][0]['geometry']['location']['lng'];
+
+    // Your fixed location (e.g., your store or warehouse coordinates)
+    $fixedLat = floatval($deliveryConfig->Latitude);
+    $fixedLon = floatval($deliveryConfig->Longitude);
+
+    // Generate the Google Maps route URL (your location as origin, user as destination)
+    $googleMapRouteUrl = "https://www.google.com/maps/dir/?api=1&origin={$fixedLat},{$fixedLon}&destination={$userLat},{$userLon}&travelmode=driving";
+
+    return $googleMapRouteUrl;
+}
+
+
 
 function DetailedPaymentFromOrder(Request $req){
     $this->audit->RateLimit($req->ip());
