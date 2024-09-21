@@ -24,6 +24,7 @@ use App\Models\MasterRepo;
 use App\Models\Bagging;
 use App\Models\DeliveryConfig;
 use App\Models\Products;
+use App\Models\PaymentOnDelivery;
 
 class MasterControllerV1 extends Controller
 {
@@ -444,6 +445,7 @@ function ConfirmCreditPayment($TransactionId)
     $p->Email = $ca->Email;
     $p->AmountPaid =  $c->AmountPaid;
     $p->UserId = $ca->UserId;
+    $p->Status = "confirmed";
 
 
 
@@ -618,7 +620,8 @@ function ConfirmShoppingCardPayment($TransactionId)
         'Phone' => "For: {$c->PurchasedByID}",
         'Email' => $c->Email,
         'AmountPaid' => $c->Amount,
-        'UserId' => $c->PurchasedByID
+        'UserId' => $c->PurchasedByID,
+        "Status" => "confirmed"
     ]);
 
     // Save both the collector and payment records
@@ -647,6 +650,61 @@ function CardInformation(Request $req){
     $sales = ShoppingCard::where("CardNumber", $req->CardNumber)->first();
     return $sales;
 }
+
+
+public function ConfirmPaymentOnDelivery(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+
+    $rp = $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_PaymentOnDelivery");
+    if ($rp->getStatusCode() !== 200) {
+        return $rp;
+    }
+
+   $p =  PaymentOnDelivery::where("OrderId",$req->OrderId)->first();
+   if(!$p){
+    return response()->json(["message"=>"Payment does not delivery"],400);
+   }
+
+   if($req->Amount < $p->Amount){
+    return response()->json(["message"=>"The amount you entered {$req->Amount} is less than the required amount {$p->Amount}"],400);
+   }
+
+   $p->IsFullyPaid = true;
+
+   $saver = $p->save();
+
+   if($saver){
+    $message = "For the Order with ID {$req->OrderId}, the amount is {$p->Amount} and this admin entered {$req->Amount} as payment amount";
+    $this->audit->Auditor($req->AdminId, $message);
+    return response()->json(["message"=>"Payment made successfully"],200);
+    }
+    else{
+        return response()->json(["message"=>"Failed to complete payment"],400);
+    }
+
+
+
+
+}
+
+public function ViewPaymentOnDelivery(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+
+    $rp = $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_PaymentOnDelivery");
+    if ($rp->getStatusCode() !== 200) {
+        return $rp;
+    }
+
+   $p =  PaymentOnDelivery::get();
+
+   return $p;
+
+
+
+}
+
 
 public function DeliveryConfig(Request $req)
 {

@@ -19,6 +19,8 @@ use App\Models\Notification;
 use App\Models\CreditSales;
 use App\Models\CollectionAccount;
 use App\Models\ShoppingCard;
+use App\Models\PaymentOnDelivery;
+use App\Models\DeliveryConfig;
 
 
 class CartOrderPayment extends Controller
@@ -481,6 +483,7 @@ function AddDeliveryDetails(Request $req){
         $p->Email = $r->Email;
         $p->AmountPaid = $formattedTotal;
         $p->UserId = $card->AccountHolderID;
+        $p->Status = "confirmed";
 
         $saver = $p->save();
 
@@ -552,6 +555,69 @@ function AddDeliveryDetails(Request $req){
             return response()->json(["message"=>"Failed to Process Order"], 400);
 
         }
+
+
+
+    }
+
+    if($req->PaymentMethod == "Payment On Delivery"){
+
+        $poD = new PaymentOnDelivery([
+            'OrderId' => $req->OrderId,
+            'PaymentOnDeliveryID' => $this->audit->IdGenerator(),
+            'Phone' => $r->Phone,
+            'Email' => $r->Email,
+            'Amount' => $formattedTotal,
+            'UserId' => $r->UserId,
+            'FullName'=>$r->Username,
+        ]);
+
+
+
+        $p = new Payment();
+        $p->OrderId = $req->OrderId;
+        $p->Phone = $r->Phone;
+        $p->Email = $r->Email;
+        $p->AmountPaid = $formattedTotal;
+        $p->UserId = $r->UserId;
+        $p->Status = "confirmed";
+
+        $saver = $p->save();
+
+
+        $baggingId = $this->audit->IdGenerator();
+        $payId = $this->audit->IdGenerator();
+
+        $m = new MasterRepo();
+        $m->MasterId =  $p->OrderId;
+        $m->UserId =  $p->UserId;
+        $m->OrderId = $p->OrderId;
+        $m->BaggingId = $baggingId;
+        $m->PaymentId =  $payId;
+        $m->save();
+
+        $b = new Bagging();
+        $b->MasterId = $p->OrderId;
+        $b->UserId = $p->UserId;
+        $b->OrderId = $p->OrderId;
+        $b->BaggingId =  $baggingId;
+        $b->PaymentId =  $payId;
+        $b->save();
+
+
+
+
+
+        if($saver){
+            $message = $req->OrderId." order has been placed";
+            $this->audit->CustomerAuditor($req->UserId, $message);
+            return response()->json(["message"=>"Your location information has been sent"], 200);
+        }else{
+
+            return response()->json(["message"=>"Failed to Process Order"], 400);
+
+        }
+
 
 
 
@@ -665,29 +731,35 @@ function getRoadDistance($userAddress) {
         $this->audit->RateLimit($req->ip());
 
         // Retrieve the payment details
-        $s = Payment::where("UserId", $req->UserId)
-            ->where("OrderId", $req->OrderId)
-            ->first();
+        $productPrice = Order::where("UserId", $req->UserId)->where("OrderId", $req->OrderId)->sum(DB::raw('Price * Quantity'));
 
-        // If payment details are not available, return an error response
-        if (!$s) {
-            return response()->json(["message" => "Payment not available"], 400);
+        $userAddress = "{$req->Country}, {$req->Region}, {$req->City}, {$req->DetailedAddress}";
+
+       
+        // Get the road distance using the Google Maps API
+        $distance = $this->getRoadDistance($userAddress);
+
+        // If distance is not returned (i.e., invalid location)
+        if (!$distance) {
+            return response()->json(["message" => "Invalid location. Please verify the spelling and try again."], 400);
         }
 
-        // Log the action
-        $message = $req->UserId . " viewed total payment amount for " . $req->OrderId;
-        $this->audit->CustomerAuditor($req->UserId, $message);
+        $q = DeliveryConfig::first();
+        $delivery =  $distance * $q->PricePerKm;
+        $totalPay = $productPrice + $delivery;
+        $formattedTotal = number_format($totalPay, 2, '.', '');
 
-        // Calculate shipping and tax
-        $shipping = 0.08 * $s->AmountPaid;
-        $tax = 0.01 * $s->AmountPaid;
-        $total = $s->AmountPaid + $shipping + $tax;
 
-        // Format the total amount to 2 decimal places
-        $formattedTotal = number_format($total, 2, '.', ',');
 
-        // Return the total payment amount in JSON response
-        return response()->json(["message" => $formattedTotal], 200);
+        $final = [
+            "OrderId" => $req->OrderId,
+            "Delivery" => number_format($delivery, 2, '.', ''),
+            "Amount" => $productPrice,
+            "Total" =>  $formattedTotal
+
+        ];
+
+        return $final;
     }
 
 
@@ -715,12 +787,8 @@ public function Payment($UserId, $OrderId)
          return response()->json(["message" => "Main Order does not exist"], 400);
          }
 
-         $shipping = 0.08 * $s->AmountPaid;
-         $tax = 0.01 * $s->AmountPaid;
-         $total = $s->AmountPaid + $shipping + $tax;
-
         // Ensure the total amount is an integer and in the smallest currency unit (e.g., kobo, pesewas)
-        $totalInPesewas = intval($total * 100);
+        $totalInPesewas = intval($s->AmountPaid * 100);
 
         $tref = Paystack::genTranxRef();
 
@@ -800,7 +868,7 @@ function ConfirmPayment($RefId)
 
         // Additional logic if payment is found and confirmed
         // For example, you might want to update the payment status in your local database
-        $a->status = 'confirmed';
+        $a->Status = 'confirmed';
        $saver= $a->save();
        if($saver){
         $b = new Bagging();

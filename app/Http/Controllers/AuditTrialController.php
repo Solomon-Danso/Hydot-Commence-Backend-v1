@@ -525,6 +525,7 @@ function RoleList(Request $req){
     "Can_Configure_Delivery",
     "Can_Run_Promotion",
     "Can_Configure_System",
+    "Can_Handle_PaymentOnDelivery",
 
 
 
@@ -547,7 +548,7 @@ function PaymentMethodsList(Request $req){
 
     $PaymentList = [
 
-   "Mobile Money or Card",
+   "Mobile Money or Credit Card",
    "Payment On Delivery",
     "Credit Sales",
     "Shopping Card",

@@ -237,7 +237,7 @@ Route::post('CreateWebsite', [WebsiteController::class, 'CreateWebsite']);
     Route::post('ProductImage', [MenuCategoryProduct::class, 'ProductImage']);
     Route::post('DeleteProductImage', [MenuCategoryProduct::class, 'DeleteProductImage']);
 
-
+    Route::post('ViewProductAdmin', [MenuCategoryProduct::class, 'ViewProductAdmin']);
 
 
 /**********************************************
@@ -273,9 +273,11 @@ Route::post('CreateWebsite', [WebsiteController::class, 'CreateWebsite']);
  Route::post('ScheduleShoppingCard', [MasterControllerV1::class, 'ScheduleShoppingCard']);
  Route::post('DeliveryConfig', [MasterControllerV1::class, 'DeliveryConfig']);
  Route::post('ViewDeliveryConfig', [MasterControllerV1::class, 'ViewDeliveryConfig']);
-
  Route::post('RunPromotion', [MasterControllerV1::class, 'RunPromotion']);
  Route::post('RevertPromotion', [MasterControllerV1::class, 'RevertPromotion']);
+ Route::post('ConfirmPaymentOnDelivery', [MasterControllerV1::class, 'ConfirmPaymentOnDelivery']);
+ Route::post('ViewPaymentOnDelivery', [MasterControllerV1::class, 'ViewPaymentOnDelivery']);
+
 
 
 
