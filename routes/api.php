@@ -198,6 +198,8 @@ Route::post('CreateWebsite', [WebsiteController::class, 'CreateWebsite']);
     Route::post('UnBlockAdmin', [AdminUserController::class, 'UnBlockAdmin']);
     Route::post('CreateAdmin', [AdminUserController::class, 'CreateAdmin']);
     Route::post('UpdateAdmin', [AdminUserController::class, 'UpdateAdmin']);
+    Route::post('MyProfileUpdateAdmin', [AdminUserController::class, 'MyProfileUpdateAdmin']);
+
     Route::post('ViewSingleAdmin', [AdminUserController::class, 'ViewSingleAdmin']);
     Route::post('DeleteAdmin', [AdminUserController::class, 'DeleteAdmin']);
     Route::post('ViewAllAdmin', [AdminUserController::class, 'ViewAllAdmin']);

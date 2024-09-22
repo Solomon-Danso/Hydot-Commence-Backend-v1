@@ -175,7 +175,66 @@ protected function updateEnv($data = array())
 
 
 
+function MyProfileUpdateAdmin(Request $req){
+    $this->audit->RateLimit($req->ip());
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Update_Personal_Profile");
+   if ($rp->getStatusCode() !== 200) {
+    return $rp;  // Return the authorization failure response
+    }
+    $s = AdminUser::where("UserId", $req->AdminId)->first();
 
+    if(!$s){
+        return response()->json(["message"=>"Admin not found"],400);
+    }
+
+    if($req->hasFile("Picture")){
+        $s->Picture = $req->file("Picture")->store("","public");
+    }
+
+
+
+
+
+    if($req->filled("Username")){
+        $s->Username = $req->Username;
+    }
+
+
+    if($req->filled("Phone")){
+        $s->Phone = $req->Phone;
+    }
+
+    if($req->filled("Email")){
+        $s->Email = $req->Email;
+    }
+
+    if($req->filled("Password")){
+        $s->Password = bcrypt($req->Password);
+    }
+
+
+
+
+
+
+
+    $saver = $s->save();
+    if($saver){
+
+        $message = $s->Username."  details was updated";
+        $this->audit->Auditor($req->AdminId, $message);
+
+
+        return response()->json(["message" => "User Information Updated "], 200);
+
+    }else{
+        return response()->json(["message" => "Could not update Admin"], 400);
+    }
+
+
+
+
+}
 
 
 

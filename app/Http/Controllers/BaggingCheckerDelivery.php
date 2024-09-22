@@ -346,7 +346,7 @@ function ViewGlobalDelivery(Request $req){
 
 function ViewSingleOrdersToDeliver(Request $req){
     $this->audit->RateLimit($req->ip());
-   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery_To_Customers");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
 }
@@ -384,7 +384,7 @@ function DeliverNow(Request $req){
 
         $user = Notification::where("UserId",$s->UserId)->where("OrderId",$req->OrderId)->first();
         $user->delete();
-        
+
          $orderList = Order::where("UserId",$s->UserId)->where("OrderId",$req->OrderId)->get();
         if($orderList->isEmpty()) {
             return response()->json(["message"=>"Your order is empty"],400);

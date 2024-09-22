@@ -526,6 +526,8 @@ function RoleList(Request $req){
     "Can_Run_Promotion",
     "Can_Configure_System",
     "Can_Handle_PaymentOnDelivery",
+    "Can_Update_Personal_Profile",
+    "Can_Do_Delivery_To_Customers",
 
 
 
