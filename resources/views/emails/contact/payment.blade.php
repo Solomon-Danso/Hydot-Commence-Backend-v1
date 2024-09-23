@@ -67,7 +67,6 @@
         <div class="summary">
             <p>Date: {{ customDateFormat($Sales->StartDate) }}</p>
             <p>Payment Mode: {{ $Sales->PaymentMethod }}</p>
-            <p>TransactionId: {{ $Sales->TransactionId }}</p>
             <p>Payment Reference: {{ $Sales->PaymentReference }}</p>
         </div>
 

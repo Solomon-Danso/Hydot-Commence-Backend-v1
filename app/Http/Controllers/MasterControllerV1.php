@@ -15,6 +15,7 @@ use App\Mail\SalesInvoice;
 use App\Mail\CreditPayment;
 use App\Mail\ShoppingCards;
 use Paystack;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Payment;
 use App\Models\ShoppingCard;
@@ -37,16 +38,6 @@ class MasterControllerV1 extends Controller
 
     }
 
-/*
-Todo:
-If it is payment on delivery,
-(1)Payment needs to be made before the token will be sent to client
-(2)A function to make sure the user with the role Can_Handle_PaymentOnDelivery to input the amount
-(3)A function to manually input the amount for the Order, If less throw an error and log the user details
-(4)A special Auditor only to monitor fraudulent activity
-(5)Payment on delivery needs to be approved by the Super Admin only
-
-*/
 
 
 
@@ -145,127 +136,7 @@ function ViewSingleAwaitingCreditSales(Request $req){
     return $c;
 }
 
-// function AcceptCreditSales(Request $req){
 
-//     $this->audit->RateLimit($req->ip());
-//     $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
-//     if ($rp->getStatusCode() !== 200) {
-//      return $rp;  // Return the authorization failure response
-//  }
-
-//     $c = CreditSales::where("ReferenceId", $req->ReferenceId)->first();
-//     if(!$c){
-//         return response()->json(["message"=>"Credit sales not found"],400);
-//     }
-
-//     $c->IsApproved = true;
-
-//     $s = new CollectionAccount();
-//     $s->OrderId = $c->OrderId;
-//     $s->AccountId = $this->audit->ProformaIdGenerator();
-//     $s->Phone = $c->Phone;
-//     $s->Email = $c->Email;
-//     $s->Debit = $c->CreditAmount;
-//     $s->Credit = 0;
-//     $s->UserId = $c->UserId;
-//     $s->FullName = $c->FullName;
-//     $s->Balance = $c->CreditAmount;
-//     $s->AccountType = "CreditSales";
-//     $s->Deadline = $req->Deadline;
-//     $s->AmountToPay = $c->CreditAmount/4;
-//     $s->UserPic = $c->UserPic;
-//     $s->IDFront = $c->IDFront;
-//     $s->IDBack = $c->IDBack;
-
-//     $currentDate = Carbon::now(); // Get the current date
-//     $deadlineDate = Carbon::parse($req->Deadline); // Convert Deadline to a Carbon instance
-//     $daysUntilDeadline = $currentDate->diffInDays($deadlineDate); // Calculate days between now and deadline
-//     $daysToPayment = $daysUntilDeadline / 4; // One fourth of the total days
-
-//     $s->DaysToPayment = ceil($daysToPayment); // Round up to the nearest whole day
-//     $s->NextBillingDate = $currentDate->addDays($daysToPayment);
-//     $s->Status = "InProcess"; //
-
-//     $c->save();
-
-//     $saver = $s->save();
-
-//     if($saver){
-
-//         $baggingId = $this->audit->IdGenerator();
-
-//         $m = new MasterRepo();
-//         $m->MasterId =  $c->OrderId;
-//         $m->UserId =  $s->UserId;
-//         $m->OrderId = $c->OrderId;
-//         $m->BaggingId = $baggingId;
-//         $m->save();
-
-//         $b = new Bagging();
-//         $b->MasterId = $c->OrderId;
-//         $b->UserId = $s->UserId;
-//         $b->OrderId = $c->OrderId;
-//         $b->BaggingId =  $baggingId;
-//         $b->PaymentId = $s->AccountId;
-//         $b->save();
-
-//         $orderList = Order::where("UserId", $c->UserId)->where("OrderId", $c->OrderId)->get();
-
-//         foreach($orderList as $o){
-//             $product = Product::where("ProductId", $o->ProductId)->first();
-//             if(!$product){
-//                 return response()->json(["message"=>"Invalid Product in your order"],400);
-//             }
-
-//             $product->Quantity = $product->Quantity - $o->Quantity;
-//             $product->PurchaseCounter = $product->PurchaseCounter+1;
-//             $product->save();
-
-//             $o->OrderStatus = "awaiting delivery";
-//             $o->save();
-
-//         }
-
-
-
-//         $firstPaymentDate = $currentDate->copy()->addDays($daysToPayment);
-//         $secondPaymentDate = $currentDate->copy()->addDays($daysToPayment * 2);
-//         $thirdPaymentDate = $currentDate->copy()->addDays($daysToPayment * 3);
-//         $fourthPaymentDate = $currentDate->copy()->addDays($daysToPayment * 4);
-
-//         $list = [
-//             "Fullname" => $s->FullName,
-//             "OrderId" => $s->OrderId,
-//             "FirstPayment" => $firstPaymentDate,
-//             "SecondPayment" => $secondPaymentDate,
-//             "ThirdPayment" => $thirdPaymentDate,
-//             "FourthPayment" => $fourthPaymentDate,
-//             "Total" => $s->Debit
-//         ];
-
-
-//         try {
-//             Mail::to($s->Email)->send(new SalesInvoice( $list ));
-
-//         $message = "Approved ".$s->OrderId." orderId as a credit sales for ".$s->FullName;
-//         $this->audit->Auditor($req->AdminId, $message);
-//         return response()->json(["message"=>$s->OrderId." Approved Successfully"],200);
-//         } catch (\Exception $e) {
-
-//             return response()->json(['message' => $s->OrderId." Approved but email failed to send"], 200);
-//         }
-
-
-//     }
-//     else{
-//         return response()->json(["message"=>"Failed to approve order"],400);
-//     }
-
-
-
-
-
-// }
 
 public function AcceptCreditSales(Request $req)
 {
@@ -700,68 +571,125 @@ function ViewCollectionAccountHistory(Request $req){
 
 //Shopping Card Information
 
-public function ScheduleShoppingCard(Request $req){
+// public function ScheduleShoppingCard(Request $req){
 
+//     $user = Customer::where('Email', $req->Email)->first();
+//     if(!$user){
+//         return response()->json(['message' => 'Invalid Customer Email'], 400);
+
+//     }
+
+//     $maker = Customer::where('UserId',  $req->UserId)->first();
+//     if(!$maker){
+//         return response()->json(['message' => 'Not Authorized'], 400);
+
+//     }
+
+
+//         $TransactionId = $this->audit->IdGenerator();
+
+//         $s = new ShoppingCardCollector();
+//         $s->TransactionID = $TransactionId;
+//         $s->PurchasedByID = $maker->UserId;
+//         $s->Amount = $req->Amount;
+//         $s->AccountHolderID = $user->UserId;
+//         $s->AccountHolderName = $user->Username;
+//         $s->Status = "Pending";
+//         $s->Email = $maker->Email;
+
+//         $checker = ShoppingCard::where("AccountHolderID",$user->UserId)->first();
+
+//         if($checker){
+//             $s->CardNumber = $checker->CardNumber;
+//         }
+//         else{
+//             $s->CardNumber = $this->audit->IdGenerator();
+//         }
+//         $s->save();
+
+//         $list = [
+//             "TransactionId"=> $TransactionId,
+//             "Amount" => $s->Amount,
+//             "Name" => $s->AccountHolderName,
+//             "UserId" => $s->AccountHolderID,
+//             "PaymentReference" =>`Shopping Card Topup for {$s->AccountHolderName}`,
+
+//         ];
+//         try {
+//             Mail::to($maker->Email)->send(new ShoppingCards( $list));
+//             $message = `Shopping Card Topup for {$s->AccountHolderName}`;
+//             $this->audit->CustomerAuditor($s->PurchasedByID, $message);
+//             return response()->json(["message"=>"Check Your Email To Complete The Topup"],200);
+
+//         } catch (\Exception $e) {
+//             Log::info("Failed to send invoice to: {$maker->Email}, ".$e);
+//             return response()->json(["message"=>`Failed to send Email to: {$maker->Email}`],200);
+
+//         }
+
+
+
+
+
+
+
+
+// }
+
+public function ScheduleShoppingCard(Request $req) {
     $user = Customer::where('Email', $req->Email)->first();
-    if(!$user){
+    if (!$user) {
         return response()->json(['message' => 'Invalid Customer Email'], 400);
-
     }
 
-    $maker = Customer::where('UserId',  $req->UserId)->first();
-    if(!$maker){
+    $maker = Customer::where('UserId', $req->UserId)->first();
+    if (!$maker) {
         return response()->json(['message' => 'Not Authorized'], 400);
-
     }
 
+    $TransactionId = $this->audit->IdGenerator();
 
-        $TransactionId = $this->audit->IdGenerator();
+    $s = new ShoppingCardCollector();
+    $s->TransactionID = $TransactionId;
+    $s->PurchasedByID = $maker->UserId;
+    $s->Amount = $req->Amount;
+    $s->AccountHolderID = $user->UserId;
+    $s->AccountHolderName = $user->Username;
+    $s->Status = "Pending";
+    $s->Email = $maker->Email;
 
-        $s = new ShoppingCardCollector();
-        $s->TransactionID = $TransactionId;
-        $s->PurchasedByID = $maker->UserId;
-        $s->Amount = $req->Amount;
-        $s->AccountHolderID = $user->UserId;
-        $s->AccountHolderName = $user->Username;
-        $s->Status = "Pending";
-        $s->Email = $maker->Email;
+    $checker = ShoppingCard::where("AccountHolderID", $user->UserId)->first();
 
-        if($req->filled("CardNumber")){
-            $s->CardNumber = $req->CardNumber;
-        }
-        else{
-            $s->CardNumber = $this->audit->IdGenerator();
-        }
-        $s->save();
+    if ($checker) {
+        $s->CardNumber = $checker->CardNumber;
+    } else {
+        $s->CardNumber = $this->audit->IdGenerator();
+    }
 
-        $list = [
-            "TransactionId"=> $TransactionId,
-            "Amount" => $s->Amount,
-            "Name" => $s->AccountHolderName,
-            "UserId" => $s->AccountHolderID,
-            "PaymentReference" =>`Shopping Card Topup for {$s->AccountHolderName}`,
+    $s->save();
 
-        ];
-        try {
-            Mail::to($maker->Email)->send(new ShoppingCards( $list));
-            $message = `Shopping Card Topup for {$s->AccountHolderName}`;
-            $this->audit->CustomerAuditor($s->PurchasedByID, $message);
-            return response()->json(["message"=>"Check Your Email To Complete The Topup"],200);
+    $list = [
+        "TransactionId" => $TransactionId,
+        "Amount" => $s->Amount,
+        "Name" => $s->AccountHolderName,
+        "UserId" => $s->AccountHolderID,
+        "PaymentReference" => "Shopping Card Topup for {$s->AccountHolderName}",
+    ];
 
-        } catch (\Exception $e) {
-            Log::info("Failed to send invoice to: {$maker->Email}");
-            return response()->json(["message"=>`Failed to send Email to: {$maker->Email}`],200);
+    try {
+        Mail::to($maker->Email)->send(new ShoppingCards($list));
 
-        }
+        $message = "Shopping Card Topup for {$s->AccountHolderName}";
+        $this->audit->CustomerAuditor($s->PurchasedByID, $message);
 
+        return response()->json(["message" => "Check Your Email To Complete The Topup"], 200);
+    } catch (\Exception $e) {
+        Log::info("Failed to send invoice to: {$maker->Email}, " . $e->getMessage());
 
-
-
-
-
-
-
+        return response()->json(["message" => "Failed to send Email to: {$maker->Email}"], 400);
+    }
 }
+
 
 
 public function MakePaymentForShoppingCard($TransactionId)
@@ -820,23 +748,29 @@ function ConfirmShoppingCardPayment($TransactionId)
         return response()->json(["message" => "Transaction not found"], 400);
     }
 
+    $g = ShoppingCardCollector::where("TransactionId", $TransactionId)->where("Status", "Confirmed")->first();
+
+    if ($g) {
+        return response()->json(["message" => "Transaction already Confirmed"], 400);
+    }
+
     // Update the status of the shopping card transaction
     $c->Status = "Confirmed";
 
     // Check if the card exists; update or create as necessary
-    $checker = ShoppingCard::firstOrCreate(
-        ["CardNumber" => $c->CardNumber],  // Search condition
-        [ // Default values if the card is not found
-            'PurchasedByID' => $c->PurchasedByID,
-            'AccountHolderID' => $c->AccountHolderID,
-            'AccountHolderName' => $c->AccountHolderName,
-            'Amount' => 0 // Initialize amount if creating a new record
-        ]
-    );
+    $d = ShoppingCard::where("CardNumber", $c->CardNumber)->first();
+    if($d){
+        $d->Amount += $c->Amount;
+    }else{
+        $d = ShoppingCard::firstOrNew();
+        $d->CardNumber = $c->CardNumber;
+        $d->PurchasedByID = $c->PurchasedByID;
+        $d->AccountHolderID = $c->AccountHolderID;
+        $d->AccountHolderName = $c->AccountHolderName;
+        $d->Amount = $c->Amount;
+    }
 
-    // Add the amount to the existing or newly created card
-    $checker->Amount += $c->Amount;
-    $saver = $checker->save();
+    $saver = $d->save();
 
     // Create a payment record
     $p = new Payment();

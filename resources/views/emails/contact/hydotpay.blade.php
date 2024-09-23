@@ -327,19 +327,7 @@
                                                                                                         </div>
                                                                                                     </td>
                                                                                                 </tr>
-                                                                                                <tr style="vertical-align: top">
-                                                                                                    <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-top: 0;padding-right: 20px;padding-bottom: 0;padding-left: 20px;">
-                                                                                                        <div style="color:#555555;line-height:120%;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;">
-                                                                                                            <div style="font-size:14px;line-height:17px;text-align:left;color:#555555;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;padding-top: 15px;padding-right: 10px;padding-bottom: 15px;padding-left: 10px;">
-                                                                                                                <p style="margin: 0;font-size: 14px;line-height: 17px;text-align: left">
-                                                                                                                    PaymentId&nbsp;
-                                                                                                                    <strong style="float:right">{{ $Sales->TransactionId }}</strong>
-                                                                                                                    <br>
-                                                                                                                </p>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    </td>
-                                                                                                </tr>
+                                                                                               
 
                                                                                                 <tr style="vertical-align: top">
                                                                                                     <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-top: 0;padding-right: 20px;padding-bottom: 0;padding-left: 20px;">

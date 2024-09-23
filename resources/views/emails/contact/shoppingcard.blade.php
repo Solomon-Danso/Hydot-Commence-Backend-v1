@@ -267,7 +267,7 @@
                                                                                                                     <span style="font-size: 36px; line-height: 43px;">
                                                                                                                         <strong>
                                                                                                                             <span style="line-height: 43px; font-size: 36px;">GHS
-                                                                                                                                {{ number_format($Sales->Amount, 2) }}
+                                                                                                                                {{ number_format($c['Amount'], 2) }}
                                                                                                                             </span>
                                                                                                                         </strong>
                                                                                                                     </span>
@@ -306,8 +306,8 @@
                                                                                                         <div style="color:#555555;line-height:120%;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;">
                                                                                                             <div style="font-size:14px;line-height:17px;text-align:left;color:#555555;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;padding-top: 15px;padding-right: 10px;padding-bottom: 15px;padding-left: 10px;border-bottom: solid 1px #EDEDED;">
                                                                                                                 <p style="margin: 0;font-size: 14px;line-height: 17px;text-align: left">
-                                                                                                                    Username&nbsp;
-                                                                                                                    <strong style="float:right">{{ $Sales->CustomerName }}</strong>
+                                                                                                                    Account Name&nbsp;
+                                                                                                                    <strong style="float:right">{{ $c['Name'] }}</strong>
                                                                                                                     <br>
                                                                                                                 </p>
                                                                                                             </div>
@@ -320,26 +320,14 @@
                                                                                                             <div style="font-size:14px;line-height:17px;text-align:left;color:#555555;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;border-bottom: solid 1px #EDEDED;padding-top: 15px;padding-right: 10px;padding-bottom: 15px;padding-left: 10px;">
                                                                                                                 <p style="margin: 0;font-size: 14px;line-height: 17px;text-align: left">
                                                                                                                     ID&nbsp;
-                                                                                                                    <strong style="float:right">{{ $Sales->CustomerId }}</strong>
+                                                                                                                    <strong style="float:right">{{ $c['UserId'] }}</strong>
                                                                                                                     <br>
                                                                                                                 </p>
                                                                                                             </div>
                                                                                                         </div>
                                                                                                     </td>
                                                                                                 </tr>
-                                                                                                <tr style="vertical-align: top">
-                                                                                                    <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-top: 0;padding-right: 20px;padding-bottom: 0;padding-left: 20px;">
-                                                                                                        <div style="color:#555555;line-height:120%;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;">
-                                                                                                            <div style="font-size:14px;line-height:17px;text-align:left;color:#555555;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;padding-top: 15px;padding-right: 10px;padding-bottom: 15px;padding-left: 10px;">
-                                                                                                                <p style="margin: 0;font-size: 14px;line-height: 17px;text-align: left">
-                                                                                                                    PaymentId&nbsp;
-                                                                                                                    <strong style="float:right">{{ $Sales->TransactionId }}</strong>
-                                                                                                                    <br>
-                                                                                                                </p>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    </td>
-                                                                                                </tr>
+                                                                                               
 
                                                                                                 <tr style="vertical-align: top">
                                                                                                     <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-top: 0;padding-right: 20px;padding-bottom: 0;padding-left: 20px;">
@@ -347,7 +335,7 @@
                                                                                                             <div style="font-size:14px;line-height:17px;text-align:left;color:#555555;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;padding-top: 15px;padding-right: 10px;padding-bottom: 15px;padding-left: 10px;">
                                                                                                                 <p style="margin: 0;font-size: 14px;line-height: 17px;text-align: left">
                                                                                                                     Narration&nbsp;
-                                                                                                                    <strong style="float:right">{{ $Sales->PaymentReference }}</strong>
+                                                                                                                    <strong style="float:right">{{$c['PaymentReference'] }}</strong>
                                                                                                                     <br>
                                                                                                                 </p>
                                                                                                             </div>
@@ -389,7 +377,7 @@
                                                                                                             <div style="font-size:14px;line-height:21px;text-align:center;color:#555555;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;">
                                                                                                                 <p style="margin: 0;font-size: 14px;line-height: 21px;text-align: center">
 
-                                                                                                                    <a style="display: inline-block; width: 80%; padding: 1rem; border-radius: 1.5rem; background-color: #000000; color: #ffffff; font-size: 1rem; text-align: center; text-decoration: none; cursor: pointer;" target="_blank" title="email" href="http://127.0.0.1:8000/api/MakePaymentForShoppingCard/{{ $Sales->TransactionId }}">Make Payment</a>
+                                                                                                                    <a style="display: inline-block; width: 80%; padding: 1rem; border-radius: 1.5rem; background-color: #000000; color: #ffffff; font-size: 1rem; text-align: center; text-decoration: none; cursor: pointer;" target="_blank" title="email" href="http://127.0.0.1:8000/api/MakePaymentForShoppingCard/{{ $c['TransactionId'] }}">Make Payment</a>
                                                                                                                 </p>
 
                                                                                                             </div>
