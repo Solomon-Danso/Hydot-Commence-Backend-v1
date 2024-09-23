@@ -21,6 +21,8 @@ use App\Models\CollectionAccount;
 use App\Models\ShoppingCard;
 use App\Models\PaymentOnDelivery;
 use App\Models\DeliveryConfig;
+use Illuminate\Support\Facades\Storage;
+
 
 
 class CartOrderPayment extends Controller
@@ -452,7 +454,14 @@ function AddDeliveryDetails(Request $req){
                 $s->City = $req->City;
                 $s->DigitalAddress = $req->DigitalAddress;
                 $s->DetailedAddress = $req->DetailedAddress;
-                $s->OrderStatus = "awaiting payment";
+
+                if($req->PaymentMethod == "Credit Sales"){
+                    $s->OrderStatus = "awaiting approval";
+                }else{
+                    $s->OrderStatus = "awaiting payment";
+                }
+
+
                 $s->save();
 
             }
@@ -627,29 +636,18 @@ function AddDeliveryDetails(Request $req){
         $p->Email = $r->Email;
         $p->CreditAmount = $formattedTotal;
         $p->UserId = $r->UserId;
-        $p->FullName = $r->userName;
+        $p->FullName = $r->Username;
         $p->DigitalAddress = $req->DigitalAddress;
         $p->NationalIDType = $req->NationalIDType;
         $p->NationalID = $req->NationalID;
+        if ($req->UserPic) {
+            $p->UserPic = $this->storeBase64Image($req->UserPic, 'public');
+        }
+        $p->IDFront = $req->file("IDFront")->store("","public");
+        $p->IDBack = $req->file("IDBack")->store("","public");
+
 
         $saver = $p->save();
-
-        $orderList = Order::where("UserId", $r->UserId)->where("OrderId", $req->OrderId)->get();
-
-        foreach($orderList as $o){
-            $product = Product::where("ProductId", $o->ProductId)->first();
-            if(!$product){
-                return response()->json(["message"=>"Invalid Product in your order"],400);
-            }
-
-            $product->Quantity = $product->Quantity - $o->Quantity;
-            $product->PurchaseCounter = $product->PurchaseCounter+1;
-            $product->save();
-
-            $o->OrderStatus = "awaiting delivery";
-            $o->save();
-
-        }
 
 
 
@@ -752,6 +750,38 @@ function AddDeliveryDetails(Request $req){
 
 
 
+}
+
+private function storeBase64Image($base64Image, $disk)
+{
+    // Check if the base64 string is valid
+    if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
+        $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+        $type = strtolower($type[1]); // jpg, png, gif, etc.
+
+        // Check if the type is valid
+        if (!in_array($type, ['jpg', 'jpeg', 'png', 'gif'])) {
+            throw new \Exception('Invalid image type');
+        }
+
+        // Decode base64 string
+        $base64Image = base64_decode($base64Image);
+
+        if ($base64Image === false) {
+            throw new \Exception('Base64 decode failed');
+        }
+
+        // Generate a unique file name
+        $fileName = uniqid() . '.' . $type;
+
+        // Store the image on the specified disk (public or local)
+        $filePath = "uploads/images/{$fileName}";
+        Storage::disk($disk)->put($filePath, $base64Image);
+
+        return $filePath; // Return the path to store in the database
+    }
+
+    return null;
 }
 
 

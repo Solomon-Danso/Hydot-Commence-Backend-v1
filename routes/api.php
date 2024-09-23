@@ -272,6 +272,8 @@ Route::post('CreateWebsite', [WebsiteController::class, 'CreateWebsite']);
  Route::post('PaymentMethods', [MasterControllerV1::class, 'PaymentMethods']);
  Route::post('DeletePaymentMethods', [MasterControllerV1::class, 'DeletePaymentMethods']);
  Route::post('ViewAwaitingCreditSales', [MasterControllerV1::class, 'ViewAwaitingCreditSales']);
+ Route::post('ViewSingleAwaitingCreditSales', [MasterControllerV1::class, 'ViewSingleAwaitingCreditSales']);
+
  Route::post('AcceptCreditSales', [MasterControllerV1::class, 'AcceptCreditSales']);
  Route::post('RejectCreditSales', [MasterControllerV1::class, 'RejectCreditSales']);
  Route::post('ScheduleSinglePayment', [MasterControllerV1::class, 'ScheduleSinglePayment']);

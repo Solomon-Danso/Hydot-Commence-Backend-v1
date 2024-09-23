@@ -528,6 +528,7 @@ function RoleList(Request $req){
     "Can_Handle_PaymentOnDelivery",
     "Can_Update_Personal_Profile",
     "Can_Do_Delivery_To_Customers",
+    "Can_Handle_Credit_Sales",
 
 
 

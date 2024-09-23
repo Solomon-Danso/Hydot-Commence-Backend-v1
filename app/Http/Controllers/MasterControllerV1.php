@@ -117,12 +117,41 @@ function DeletePaymentMethods(Request $req){
 
 }
 
-function ViewAwaitingCreditSales(){
+function ViewAwaitingCreditSales(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+    if ($rp->getStatusCode() !== 200) {
+     return $rp;  // Return the authorization failure response
+ }
+
     $c = CreditSales::where("IsApproved", "false")->get();
     return $c;
 }
 
+function ViewSingleAwaitingCreditSales(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+    if ($rp->getStatusCode() !== 200) {
+     return $rp;  // Return the authorization failure response
+ }
+
+    $c = CreditSales::where("ReferenceId", $req->ReferenceId)->first();
+    if(!$c){
+        return response()->json(["message"=>"Sales not available"],400);
+    }
+    return $c;
+}
+
 function AcceptCreditSales(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+    if ($rp->getStatusCode() !== 200) {
+     return $rp;  // Return the authorization failure response
+ }
+
     $c = CreditSales::where("ReferenceId", $req->ReferenceId)->first();
     if(!$c){
         return response()->json(["message"=>"Credit sales not found"],400);
@@ -143,6 +172,9 @@ function AcceptCreditSales(Request $req){
     $s->AccountType = "CreditSales";
     $s->Deadline = $req->Deadline;
     $s->AmountToPay = $c->CreditAmount/4;
+    $s->UserPic = $c->UserPic;
+    $s->IDFront = $c->IDFront;
+    $s->IDBack = $c->IDBack;
 
     $currentDate = Carbon::now(); // Get the current date
     $deadlineDate = Carbon::parse($req->Deadline); // Convert Deadline to a Carbon instance
@@ -232,6 +264,13 @@ function AcceptCreditSales(Request $req){
 
 
 function RejectCreditSales(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+    if ($rp->getStatusCode() !== 200) {
+     return $rp;  // Return the authorization failure response
+ }
+
     $c = CreditSales::where("ReferenceId", $req->ReferenceId)->first();
     if(!$c){
         return response()->json(["message"=>"Credit sales not found"],400);
@@ -309,6 +348,14 @@ public function SchedulePayment(Request $req){
 
 
 public function ScheduleSinglePayment(Request $req){
+
+    $this->audit->RateLimit($req->ip());
+    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+    if ($rp->getStatusCode() !== 200) {
+     return $rp;  // Return the authorization failure response
+ }
+
+
     $currentDate = Carbon::now();
 
     $c = CollectionAccount::where("AccountId",$req->AccountId)
