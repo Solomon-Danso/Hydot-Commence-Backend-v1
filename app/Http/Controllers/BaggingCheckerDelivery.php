@@ -362,7 +362,7 @@ function ViewSingleOrdersToDeliver(Request $req){
 function DeliverNow(Request $req){
 
     $this->audit->RateLimit($req->ip());
-   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery");
+   $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Do_Delivery_To_Customers");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
 }

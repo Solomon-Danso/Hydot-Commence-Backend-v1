@@ -807,7 +807,7 @@ function CardTopupHistory(Request $req){
 }
 
 function CardInformation(Request $req){
-    $sales = ShoppingCard::where("CardNumber", $req->CardNumber)->first();
+    $sales = ShoppingCard::where("AccountHolderID", $req->UserId)->first();
     return $sales;
 }
 
