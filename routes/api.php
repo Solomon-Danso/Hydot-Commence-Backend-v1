@@ -110,6 +110,8 @@ Route::get('ConfirmShoppingCardPayment/{TransactionId}', [MasterControllerV1::cl
 Route::post('SchedulePayment', [MasterControllerV1::class, 'SchedulePayment']);
 Route::post('CardInformation', [MasterControllerV1::class, 'CardInformation']);
 Route::post('CardTopupHistory', [MasterControllerV1::class, 'CardTopupHistory']);
+Route::post('ViewCollectionAccount', [MasterControllerV1::class, 'ViewCollectionAccount']);
+Route::post('ViewCollectionAccountHistory', [MasterControllerV1::class, 'ViewCollectionAccountHistory']);
 
 
 

@@ -23,8 +23,9 @@ use App\Models\Customer;
 use App\Models\MasterRepo;
 use App\Models\Bagging;
 use App\Models\DeliveryConfig;
-use App\Models\Products;
+use App\Models\Product;
 use App\Models\PaymentOnDelivery;
+use App\Models\Order;
 
 class MasterControllerV1 extends Controller
 {
@@ -144,21 +145,147 @@ function ViewSingleAwaitingCreditSales(Request $req){
     return $c;
 }
 
-function AcceptCreditSales(Request $req){
+// function AcceptCreditSales(Request $req){
 
+//     $this->audit->RateLimit($req->ip());
+//     $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+//     if ($rp->getStatusCode() !== 200) {
+//      return $rp;  // Return the authorization failure response
+//  }
+
+//     $c = CreditSales::where("ReferenceId", $req->ReferenceId)->first();
+//     if(!$c){
+//         return response()->json(["message"=>"Credit sales not found"],400);
+//     }
+
+//     $c->IsApproved = true;
+
+//     $s = new CollectionAccount();
+//     $s->OrderId = $c->OrderId;
+//     $s->AccountId = $this->audit->ProformaIdGenerator();
+//     $s->Phone = $c->Phone;
+//     $s->Email = $c->Email;
+//     $s->Debit = $c->CreditAmount;
+//     $s->Credit = 0;
+//     $s->UserId = $c->UserId;
+//     $s->FullName = $c->FullName;
+//     $s->Balance = $c->CreditAmount;
+//     $s->AccountType = "CreditSales";
+//     $s->Deadline = $req->Deadline;
+//     $s->AmountToPay = $c->CreditAmount/4;
+//     $s->UserPic = $c->UserPic;
+//     $s->IDFront = $c->IDFront;
+//     $s->IDBack = $c->IDBack;
+
+//     $currentDate = Carbon::now(); // Get the current date
+//     $deadlineDate = Carbon::parse($req->Deadline); // Convert Deadline to a Carbon instance
+//     $daysUntilDeadline = $currentDate->diffInDays($deadlineDate); // Calculate days between now and deadline
+//     $daysToPayment = $daysUntilDeadline / 4; // One fourth of the total days
+
+//     $s->DaysToPayment = ceil($daysToPayment); // Round up to the nearest whole day
+//     $s->NextBillingDate = $currentDate->addDays($daysToPayment);
+//     $s->Status = "InProcess"; //
+
+//     $c->save();
+
+//     $saver = $s->save();
+
+//     if($saver){
+
+//         $baggingId = $this->audit->IdGenerator();
+
+//         $m = new MasterRepo();
+//         $m->MasterId =  $c->OrderId;
+//         $m->UserId =  $s->UserId;
+//         $m->OrderId = $c->OrderId;
+//         $m->BaggingId = $baggingId;
+//         $m->save();
+
+//         $b = new Bagging();
+//         $b->MasterId = $c->OrderId;
+//         $b->UserId = $s->UserId;
+//         $b->OrderId = $c->OrderId;
+//         $b->BaggingId =  $baggingId;
+//         $b->PaymentId = $s->AccountId;
+//         $b->save();
+
+//         $orderList = Order::where("UserId", $c->UserId)->where("OrderId", $c->OrderId)->get();
+
+//         foreach($orderList as $o){
+//             $product = Product::where("ProductId", $o->ProductId)->first();
+//             if(!$product){
+//                 return response()->json(["message"=>"Invalid Product in your order"],400);
+//             }
+
+//             $product->Quantity = $product->Quantity - $o->Quantity;
+//             $product->PurchaseCounter = $product->PurchaseCounter+1;
+//             $product->save();
+
+//             $o->OrderStatus = "awaiting delivery";
+//             $o->save();
+
+//         }
+
+
+
+//         $firstPaymentDate = $currentDate->copy()->addDays($daysToPayment);
+//         $secondPaymentDate = $currentDate->copy()->addDays($daysToPayment * 2);
+//         $thirdPaymentDate = $currentDate->copy()->addDays($daysToPayment * 3);
+//         $fourthPaymentDate = $currentDate->copy()->addDays($daysToPayment * 4);
+
+//         $list = [
+//             "Fullname" => $s->FullName,
+//             "OrderId" => $s->OrderId,
+//             "FirstPayment" => $firstPaymentDate,
+//             "SecondPayment" => $secondPaymentDate,
+//             "ThirdPayment" => $thirdPaymentDate,
+//             "FourthPayment" => $fourthPaymentDate,
+//             "Total" => $s->Debit
+//         ];
+
+
+//         try {
+//             Mail::to($s->Email)->send(new SalesInvoice( $list ));
+
+//         $message = "Approved ".$s->OrderId." orderId as a credit sales for ".$s->FullName;
+//         $this->audit->Auditor($req->AdminId, $message);
+//         return response()->json(["message"=>$s->OrderId." Approved Successfully"],200);
+//         } catch (\Exception $e) {
+
+//             return response()->json(['message' => $s->OrderId." Approved but email failed to send"], 200);
+//         }
+
+
+//     }
+//     else{
+//         return response()->json(["message"=>"Failed to approve order"],400);
+//     }
+
+
+
+
+
+// }
+
+public function AcceptCreditSales(Request $req)
+{
+    // Rate limit and role authentication checks
     $this->audit->RateLimit($req->ip());
-    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+    $rp = $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
     if ($rp->getStatusCode() !== 200) {
-     return $rp;  // Return the authorization failure response
- }
-
-    $c = CreditSales::where("ReferenceId", $req->ReferenceId)->first();
-    if(!$c){
-        return response()->json(["message"=>"Credit sales not found"],400);
+        return $rp;  // Return the authorization failure response
     }
 
+    // Retrieve the credit sales record
+    $c = CreditSales::where("ReferenceId", $req->ReferenceId)->first();
+    if (!$c) {
+        return response()->json(["message" => "Credit sales not found"], 400);
+    }
+
+    // Approve the credit sales
     $c->IsApproved = true;
 
+    // Initialize CollectionAccount
     $s = new CollectionAccount();
     $s->OrderId = $c->OrderId;
     $s->AccountId = $this->audit->ProformaIdGenerator();
@@ -171,31 +298,61 @@ function AcceptCreditSales(Request $req){
     $s->Balance = $c->CreditAmount;
     $s->AccountType = "CreditSales";
     $s->Deadline = $req->Deadline;
-    $s->AmountToPay = $c->CreditAmount/4;
     $s->UserPic = $c->UserPic;
     $s->IDFront = $c->IDFront;
     $s->IDBack = $c->IDBack;
+    // Assign the calculated value to the DaysToPayment field
 
-    $currentDate = Carbon::now(); // Get the current date
-    $deadlineDate = Carbon::parse($req->Deadline); // Convert Deadline to a Carbon instance
-    $daysUntilDeadline = $currentDate->diffInDays($deadlineDate); // Calculate days between now and deadline
-    $daysToPayment = $daysUntilDeadline / 4; // One fourth of the total days
+    // Get the user-selected number of sessions
+    $numSessions = $req->Sessions; // Default to 4 sessions if not provided
 
-    $s->DaysToPayment = ceil($daysToPayment); // Round up to the nearest whole day
+    if ($numSessions < 1) {
+        return response()->json(["message" => "Invalid number of sessions"], 400);
+    }
+
+    // Calculate total amount to pay per session
+    $amountPerSession = $c->CreditAmount / $numSessions;
+
+    // Calculate the payment dates based on the deadline
+    $currentDate = Carbon::now(); // Current date
+    $deadlineDate = Carbon::parse($req->Deadline); // Convert deadline to a Carbon instance
+    $daysUntilDeadline = $currentDate->diffInDays($deadlineDate); // Calculate days until the deadline
+    $daysToPayment = $daysUntilDeadline / $numSessions; // Divide by the number of sessions
+    $s->DaysToPayment = $daysToPayment;
+    // Initialize payment plan array
+    $paymentPlan = [];
+    for ($i = 1; $i <= $numSessions; $i++) {
+        $paymentDate = $currentDate->copy()->addDays($daysToPayment * $i);
+
+        // Ensure the last payment does not exceed the deadline
+        if ($i == $numSessions && $paymentDate->greaterThan($deadlineDate)) {
+            $paymentDate = $deadlineDate;
+        }
+
+        // Store the payment plan details
+        $paymentPlan[] = [
+            "Session" => $i,
+            "Amount" => round($amountPerSession, 2), // Rounded for precision
+            "PaymentDate" => $paymentDate
+        ];
+    }
+
+    // Save the payment session details to the CollectionAccount model
     $s->NextBillingDate = $currentDate->addDays($daysToPayment);
-    $s->Status = "InProcess"; //
+    $s->AmountToPay = round($amountPerSession, 2); // First payment amount
+    $s->Status = "InProcess";
 
+    // Save the credit sale and collection account
     $c->save();
-
     $saver = $s->save();
 
-    if($saver){
-
+    if ($saver) {
+        // Create MasterRepo and Bagging records
         $baggingId = $this->audit->IdGenerator();
 
         $m = new MasterRepo();
-        $m->MasterId =  $c->OrderId;
-        $m->UserId =  $s->UserId;
+        $m->MasterId = $c->OrderId;
+        $m->UserId = $s->UserId;
         $m->OrderId = $c->OrderId;
         $m->BaggingId = $baggingId;
         $m->save();
@@ -204,63 +361,50 @@ function AcceptCreditSales(Request $req){
         $b->MasterId = $c->OrderId;
         $b->UserId = $s->UserId;
         $b->OrderId = $c->OrderId;
-        $b->BaggingId =  $baggingId;
+        $b->BaggingId = $baggingId;
         $b->PaymentId = $s->AccountId;
         $b->save();
 
+        // Update product quantities and order statuses
         $orderList = Order::where("UserId", $c->UserId)->where("OrderId", $c->OrderId)->get();
-
-        foreach($orderList as $o){
+        foreach ($orderList as $o) {
             $product = Product::where("ProductId", $o->ProductId)->first();
-            if(!$product){
-                return response()->json(["message"=>"Invalid Product in your order"],400);
+            if (!$product) {
+                return response()->json(["message" => "Invalid Product in your order"], 400);
             }
 
-            $product->Quantity = $product->Quantity - $o->Quantity;
-            $product->PurchaseCounter = $product->PurchaseCounter+1;
+            $product->Quantity -= $o->Quantity;
+            $product->PurchaseCounter += 1;
             $product->save();
 
             $o->OrderStatus = "awaiting delivery";
             $o->save();
-
         }
 
-
-
-
+        // Prepare payment plan and email list
         $list = [
-            "Fullname"=>$s->FullName,
+            "Fullname" => $s->FullName,
             "OrderId" => $s->OrderId,
-            "FirstPayment"=>$currentDate->addDays($daysToPayment),
-            "SecondPayment"=>$currentDate->addDays($daysToPayment*2),
-            "ThirdPayment"=>$currentDate->addDays($daysToPayment*3),
-            "FourthPayment"=>$currentDate->addDays($daysToPayment*4),
+            "PaymentPlan" => $paymentPlan, // Add the payment plan
             "Total" => $s->Debit
-
         ];
 
+        // Try sending the email
         try {
-            Mail::to($s->Email)->send(new SalesInvoice( $list ));
+            Mail::to($s->Email)->send(new SalesInvoice($list));
 
-        $message = "Approved ".$s->OrderId." orderId as a credit sales for ".$s->FullName;
-        $this->audit->Auditor($req->AdminId, $message);
-        return response()->json(["message"=>$s->OrderId." Approved Successfully"],200);
+            $message = "Approved " . $s->OrderId . " orderId as a credit sales for " . $s->FullName;
+            $this->audit->Auditor($req->AdminId, $message);
+
+            return response()->json(["message" => $s->OrderId . " Approved Successfully"], 200);
         } catch (\Exception $e) {
-
-            return response()->json(['message' => $s->OrderId." Approved but email failed to send"], 200);
+            return response()->json(['message' => $s->OrderId . " Approved but email failed to send"], 200);
         }
-
-
+    } else {
+        return response()->json(["message" => "Failed to approve order"], 400);
     }
-    else{
-        return response()->json(["message"=>"Failed to approve order"],400);
-    }
-
-
-
-
-
 }
+
 
 
 function RejectCreditSales(Request $req){
@@ -345,6 +489,7 @@ public function SchedulePayment(Request $req){
 
 
 }
+
 
 
 public function ScheduleSinglePayment(Request $req){
@@ -519,6 +664,38 @@ function ConfirmCreditPayment($TransactionId)
 
 
 }
+
+function ViewCollectionAccount(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $rp = $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+    if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+
+    $creditors = CollectionAccount::get();
+
+    return $creditors;
+
+
+
+}
+
+function ViewCollectionAccountHistory(Request $req){
+    $this->audit->RateLimit($req->ip());
+    $rp = $this->audit->RoleAuthenticator($req->AdminId, "Can_Handle_Credit_Sales");
+    if ($rp->getStatusCode() !== 200) {
+        return $rp;  // Return the authorization failure response
+    }
+
+    $creditors = CollectionPaymentHistory::where("AccountId", $req->AccountId)->get();
+
+    return $creditors;
+
+
+
+}
+
+
 
 
 //Shopping Card Information
