@@ -978,7 +978,8 @@ function RunPromotion(Request $req){
     if (!$prd){
         return response()->json(["message"=>"Product does not exist"],400);
     }
-    $prd->DiscountPrice = $req->DiscountPercentage * $prd->Price;
+    $discount = $req->DiscountPercentage * $prd->Price/100;
+    $prd->DiscountPrice = $prd->Price - $discount;
     $prd->DiscountPercentage = $req->DiscountPercentage;
     $prd->ValidUntil = $req->ValidUntil;
     $prd->Status = "ActivePromotion";
