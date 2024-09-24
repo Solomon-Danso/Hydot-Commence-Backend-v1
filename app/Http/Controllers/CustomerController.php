@@ -29,6 +29,10 @@ class CustomerController extends Controller
 public function CreateCustomer(Request $req)
     {
         $this->audit->RateLimit($req->ip());
+        $che = Customer::where("Email", $req->Email)->first();
+        if($che){
+            return response()->json(["message"=>"Email already taken"],400);
+        }
 
         $s = new Customer();
 

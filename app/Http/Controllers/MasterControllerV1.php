@@ -439,9 +439,12 @@ public function MakeCreditPayment($TransactionId)
     $email = $sales->Email;
 
     $saver = $sales->save();
+
+
     if ($saver) {
-        $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', [
-            'tref' =>  $TransactionId,
+        try {
+            $response = Http::timeout(30)->post('https://mainapi.hydottech.com/api/AddPayment', [
+                'tref' =>  $TransactionId,
             'ProductId' => "hdtCollection",
             'Product' => 'Manual Collection',
             'Username' => $sales->UserId,
@@ -449,25 +452,36 @@ public function MakeCreditPayment($TransactionId)
             'SuccessApi' => 'https://127.0.0.1:8000/api/ConfirmPayment/' . $TransactionId,
             //'SuccessApi' => 'https://hydottech.com',
             'CallbackURL' => 'https://hydottech.com',
-        ]);
+            ]);
 
-        if ($response->successful()) {
+            if ($response->successful()) {
+                $paystackData = [
+                    "amount" => $totalInPesewas, // Amount in pesewas
+                    "reference" => $TransactionId,
+                    "email" => $email,
+                    "currency" => "GHS",
+                ];
 
+                return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
+            } else {
+                return response()->json(["message" => "External Payment API is down"], 400);
+            }
 
-            $paystackData = [
-                "amount" => $totalInPesewas, // Amount in pesewas
-                "reference" => $TransactionId,
-                "email" => $email,
-                "currency" => "GHS",
-            ];
-
-            return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
-        } else {
-            return response()->json(["message" => "External Payment Api is down"], 400);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            // Handle timeout exception
+            return response()->json(["message" => "Payment API request timed out. Please try again."], 408);
+        } catch (\Exception $e) {
+            // Handle any other exceptions
+            return response()->json(["message" => "An error occurred while processing your payment. Please try again."], 500);
         }
     } else {
         return response()->json(["message" => "Failed to initialize payment"], 400);
     }
+
+
+
+
+
 }
 
 
@@ -706,8 +720,10 @@ public function MakePaymentForShoppingCard($TransactionId)
     $email = $sales->Email;
 
     $saver = $sales->save();
-    if ($saver) {
-        $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', [
+    $saver = $sales->save();
+if ($saver) {
+    try {
+        $response = Http::timeout(30)->post('https://mainapi.hydottech.com/api/AddPayment', [
             'tref' =>  $TransactionId,
             'ProductId' => "hdtCollection",
             'Product' => 'Manual Collection',
@@ -719,8 +735,6 @@ public function MakePaymentForShoppingCard($TransactionId)
         ]);
 
         if ($response->successful()) {
-
-
             $paystackData = [
                 "amount" => $totalInPesewas, // Amount in pesewas
                 "reference" => $TransactionId,
@@ -730,11 +744,24 @@ public function MakePaymentForShoppingCard($TransactionId)
 
             return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
         } else {
-            return response()->json(["message" => "External Payment Api is down"], 400);
+            return response()->json(["message" => "External Payment API is down"], 400);
         }
-    } else {
-        return response()->json(["message" => "Failed to initialize payment"], 400);
+
+    } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        // Handle timeout exception
+        return response()->json(["message" => "Payment API request timed out. Please try again."], 408);
+    } catch (\Exception $e) {
+        // Handle any other exceptions
+        return response()->json(["message" => "An error occurred while processing your payment. Please try again."], 500);
     }
+} else {
+    return response()->json(["message" => "Failed to initialize payment"], 400);
+}
+
+
+
+
+
 }
 
 

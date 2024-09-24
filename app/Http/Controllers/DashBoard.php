@@ -25,7 +25,7 @@ class DashBoard extends Controller
 
 
     function ViewTotalSales() {
-        $totalSales = Payment::sum('AmountPaid');
+        $totalSales = Payment::where("Status", "confirmed")->sum('AmountPaid');
         return response()->json(['payments' => $totalSales]);
     }
 
@@ -42,7 +42,7 @@ class DashBoard extends Controller
         // Step 1: Calculate total sales for each year and the total sales over 5 years
         for ($i = 0; $i < 5; $i++) {
             $year = $currentYear - $i;
-            $totalSales = Payment::whereYear('updated_at', $year)->sum('AmountPaid');
+            $totalSales = Payment::whereYear('updated_at', $year)->where("Status", "confirmed")->sum('AmountPaid');
             $salesData[] = [
                 'year' => $year,
                 'amount' => $totalSales
@@ -62,12 +62,14 @@ class DashBoard extends Controller
     function ViewMonthlySalesAndExpenses() {
         $currentYear = Carbon::now()->year;
         $monthlySales = DB::table('payments')
-            ->select(DB::raw('MONTH(updated_at) as month'), DB::raw('SUM(AmountPaid) as total_sales'))
-            ->whereYear('updated_at', $currentYear)
-            ->groupBy(DB::raw('MONTH(updated_at)'))
-            ->get()
-            ->keyBy('month')
-            ->toArray();
+        ->select(DB::raw('MONTH(updated_at) as month'), DB::raw('SUM(AmountPaid) as total_sales'))
+        ->whereYear('updated_at', $currentYear)
+        ->where('Status', 'confirmed') // Add this to filter by Status
+        ->groupBy(DB::raw('MONTH(updated_at)'))
+        ->get()
+        ->keyBy('month')
+        ->toArray();
+
 
         $monthlyExpenses = DB::table('expenses')
             ->select(DB::raw('MONTH(updated_at) as month'), DB::raw('SUM(AmountPaid) as total_expenses'))
@@ -121,7 +123,7 @@ function ViewTotalSalesForCurrentMonth() {
     $totalSales = DB::table('payments')
         ->whereYear('updated_at', $currentYear)
         ->whereMonth('updated_at', $currentMonth)
-        ->sum('AmountPaid');
+        ->where("Status", "confirmed")->sum('AmountPaid');
 
     // Detect database type
     $databaseConnection = config('database.default');
@@ -175,7 +177,7 @@ function ViewTotalSalesForCurrentMonth() {
 
 function ThisYearSales() {
     $currentYear = Carbon::now()->year;
-    $currentYearSales = Payment::whereYear('updated_at', $currentYear)->sum('AmountPaid');
+    $currentYearSales = Payment::whereYear('updated_at', $currentYear)->where("Status", "confirmed")->sum('AmountPaid');
 
     return response()->json(['thisYearSales' => $currentYearSales ]);
 }
@@ -198,10 +200,10 @@ function EarningData() {
     $totalProductsPreviousYear = Product::whereYear('created_at', $previousYear)->count();
 
     // 3. Sum current year sales
-    $currentYearSales = Payment::whereYear('updated_at', $currentYear)->sum('AmountPaid');
+    $currentYearSales = Payment::whereYear('updated_at', $currentYear)->where("Status", "confirmed")->sum('AmountPaid');
 
     // 4. Sum previous year sales
-    $previousYearSales = Payment::whereYear('updated_at', $previousYear)->sum('AmountPaid');
+    $previousYearSales = Payment::whereYear('updated_at', $previousYear)->where("Status", "confirmed")->sum('AmountPaid');
 
     // 5. Count total deliveries from Delivery table
     $totalDeliveriesCurrentYear = Delivery::whereYear('created_at', $currentYear)->count();

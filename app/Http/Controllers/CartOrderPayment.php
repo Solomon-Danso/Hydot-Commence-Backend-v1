@@ -548,7 +548,7 @@ function AddDeliveryDetails(Request $req){
         }
 
         if($card->Amount < $formattedTotal){
-            return response()->json(["message"=>`The amount left on the card is {$card->Amount}, please top-up to continue`],400);
+            return response()->json(["message"=>"The amount left on the card is {$card->Amount}, please top-up to continue"],400);
         }
 
 
@@ -558,9 +558,10 @@ function AddDeliveryDetails(Request $req){
         $p->OrderId = $req->OrderId;
         $p->Phone = $r->Phone;
         $p->Email = $r->Email;
-        $p->AmountPaid = $formattedTotal;
+        $p->AmountPaid = $formattedTotal * -1;
         $p->UserId = $card->AccountHolderID;
         $p->Status = "confirmed";
+        $p->ReferenceId = "Paid with Shopping Card";
 
         $saver = $p->save();
 
@@ -953,40 +954,54 @@ public function Payment($UserId, $OrderId)
         $s->ReferenceId = $tref;
 
         $saver = $s->save();
+
+
+
         if ($saver) {
             $m->PaymentId =  $s->ReferenceId;
             $m->save();
+            try {
+                $response = Http::timeout(30)->post('https://mainapi.hydottech.com/api/AddPayment', [
+                    'tref' =>  $tref,
+                    'ProductId' => "hdtCommerce",
+                    'Product' => 'Hydot Commerce',
+                    'Username' => $s->Phone,
+                    'Amount' => $s->AmountPaid,
+                    'SuccessApi' => 'https://api.commerce.hydottech.com/api/ConfirmPayment/'.$tref,
+                    'CallbackURL' => 'https://web.commerce.hydottech.com/orders',
 
-            $response = Http::post('https://mainapi.hydottech.com/api/AddPayment', [
-                'tref' =>  $tref,
-                'ProductId' => "hdtCommerce",
-                'Product' => 'Hydot Commerce',
-                'Username' => $s->Phone,
-                'Amount' => $s->AmountPaid,
-                'SuccessApi' => 'https://api.commerce.hydottech.com/api/ConfirmPayment/'.$tref,
-                'CallbackURL' => 'https://web.commerce.hydottech.com/orders',
-            ]);
+                ]);
 
-            if ($response->successful()) {
+                if ($response->successful()) {
+                    $paystackData = [
+                        "amount" => $totalInPesewas, // Amount in pesewas
+                        "reference" => $tref,
+                        "email" => $s->Email,
+                        "currency" => "GHS",
+                        "orderID" => $s->OrderId,
+                        "phone" => $s->Phone,
+                    ];
+                    return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
+                } else {
+                    return response()->json(["message" => "External Payment API is down"], 400);
+                }
 
-                $paystackData = [
-                    "amount" => $totalInPesewas, // Amount in pesewas
-                    "reference" => $tref,
-                    "email" => $s->Email,
-                    "currency" => "GHS",
-                    "orderID" => $s->OrderId,
-                    "phone" => $s->Phone,
-                ];
-
-
-
-                return Paystack::getAuthorizationUrl($paystackData)->redirectNow();
-            } else {
-                return response()->json(["message" => "External Payment Api is down"], 400);
+            } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                // Handle timeout exception
+                return response()->json(["message" => "Payment API request timed out. Please try again."], 408);
+            } catch (\Exception $e) {
+                // Handle any other exceptions
+                return response()->json(["message" => "An error occurred while processing your payment. Please try again."], 500);
             }
         } else {
             return response()->json(["message" => "Failed to initialize payment"], 400);
         }
+
+
+
+
+
+
 }
 
 
