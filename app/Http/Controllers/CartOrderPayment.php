@@ -686,7 +686,7 @@ function AddDeliveryDetails(Request $req){
         $p->OrderId = $req->OrderId;
         $p->Phone = $r->Phone;
         $p->Email = $r->Email;
-        $p->AmountPaid = $formattedTotal;
+        $p->AmountPaid = $formattedTotal*-1;
         $p->UserId = $r->UserId;
         $p->Status = "confirmed";
         $p->ReferenceId = "Payment On Delivery";

@@ -327,7 +327,7 @@
                                                                                                         </div>
                                                                                                     </td>
                                                                                                 </tr>
-                                                                                               
+
 
                                                                                                 <tr style="vertical-align: top">
                                                                                                     <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;padding-top: 0;padding-right: 20px;padding-bottom: 0;padding-left: 20px;">
@@ -377,7 +377,7 @@
                                                                                                             <div style="font-size:14px;line-height:21px;text-align:center;color:#555555;font-family:-apple-system, BlinkMacSystemFont, &#039;Segoe UI&#039;, &#039;Roboto&#039;, &#039;Oxygen&#039;, &#039;Ubuntu&#039;, &#039;Cantarell&#039;, &#039;Fira Sans&#039;, &#039;Droid Sans&#039;, &#039;Helvetica Neue&#039;, sans-serif;">
                                                                                                                 <p style="margin: 0;font-size: 14px;line-height: 21px;text-align: center">
 
-                                                                                                                    <a style="display: inline-block; width: 80%; padding: 1rem; border-radius: 1.5rem; background-color: #000000; color: #ffffff; font-size: 1rem; text-align: center; text-decoration: none; cursor: pointer;" target="_blank" title="email" href="http://127.0.0.1:8000/api/MakeCreditPayment/{{ $Sales->TransactionId }}">Make Payment</a>
+                                                                                                                    <a style="display: inline-block; width: 80%; padding: 1rem; border-radius: 1.5rem; background-color: #000000; color: #ffffff; font-size: 1rem; text-align: center; text-decoration: none; cursor: pointer;" target="_blank" title="email" href="https://api.commerce.hydottech.com/api/MakeCreditPayment/{{ $Sales->TransactionId }}">Make Payment</a>
                                                                                                                 </p>
 
                                                                                                             </div>

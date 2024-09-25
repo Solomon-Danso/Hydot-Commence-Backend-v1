@@ -449,7 +449,7 @@ public function MakeCreditPayment($TransactionId)
             'Product' => 'Manual Collection',
             'Username' => $sales->UserId,
             'Amount' => $sales->AmountPaid,
-            'SuccessApi' => 'https://127.0.0.1:8000/api/ConfirmPayment/' . $TransactionId,
+            'SuccessApi' => 'https://api.commerce.hydottech.com/api/ConfirmPayment/' . $TransactionId,
             //'SuccessApi' => 'https://hydottech.com',
             'CallbackURL' => 'https://hydottech.com',
             ]);
@@ -729,7 +729,7 @@ if ($saver) {
             'Product' => 'Manual Collection',
             'Username' => $sales->UserId,
             'Amount' => $sales->Amount,
-            'SuccessApi' => 'https://127.0.0.1:8000/api/ConfirmShoppingCardPayment/' . $TransactionId,
+            'SuccessApi' => 'https://api.commerce.hydottech.com/api/ConfirmShoppingCardPayment/' . $TransactionId,
             //'SuccessApi' => 'https://hydottech.com',
             'CallbackURL' => 'https://hydottech.com',
         ]);
@@ -858,6 +858,18 @@ public function ConfirmPaymentOnDelivery(Request $req){
    }
 
    $p->IsFullyPaid = true;
+
+
+   $q = new Payment();
+   $q->OrderId = $p->OrderId;
+   $q->Phone = $p->Phone;
+   $q->Email = $p->Email;
+   $q->AmountPaid = $req->Amount;
+   $q->UserId = $p->UserId;
+   $q->Status = "confirmed";
+   $q->ReferenceId = "Payment On Delivery for the Order ".$p->OrderId;
+
+   $q->save();
 
    $saver = $p->save();
 
