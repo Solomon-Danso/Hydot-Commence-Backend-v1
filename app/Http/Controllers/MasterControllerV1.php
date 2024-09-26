@@ -451,7 +451,7 @@ public function MakeCreditPayment($TransactionId)
             'Amount' => $sales->AmountPaid,
             'SuccessApi' => 'https://api.commerce.hydottech.com/api/ConfirmPayment/' . $TransactionId,
             //'SuccessApi' => 'https://hydottech.com',
-            'CallbackURL' => 'https://hydottech.com',
+            'CallbackURL' => 'https://web.commerce.hydottech.com/orders',
             ]);
 
             if ($response->successful()) {
@@ -731,7 +731,7 @@ if ($saver) {
             'Amount' => $sales->Amount,
             'SuccessApi' => 'https://api.commerce.hydottech.com/api/ConfirmShoppingCardPayment/' . $TransactionId,
             //'SuccessApi' => 'https://hydottech.com',
-            'CallbackURL' => 'https://hydottech.com',
+            'CallbackURL' => 'https://web.commerce.hydottech.com/shoppingCard/',
         ]);
 
         if ($response->successful()) {
@@ -850,7 +850,12 @@ public function ConfirmPaymentOnDelivery(Request $req){
 
    $p =  PaymentOnDelivery::where("OrderId",$req->OrderId)->first();
    if(!$p){
-    return response()->json(["message"=>"Payment does not delivery"],400);
+    return response()->json(["message"=>"Payment does not exist"],400);
+   }
+
+   $q =  Payment::where("OrderId",$req->OrderId)->first();
+   if(!$q){
+    return response()->json(["message"=>"Payment does not exist"],400);
    }
 
    if($req->Amount < $p->Amount){
@@ -859,13 +864,6 @@ public function ConfirmPaymentOnDelivery(Request $req){
 
    $p->IsFullyPaid = true;
 
-
-   $q = new Payment();
-   $q->OrderId = $p->OrderId;
-   $q->Phone = $p->Phone;
-   $q->Email = $p->Email;
-   $q->AmountPaid = $req->Amount;
-   $q->UserId = $p->UserId;
    $q->Status = "confirmed";
    $q->ReferenceId = "Payment On Delivery for the Order ".$p->OrderId;
 
