@@ -439,7 +439,7 @@ function UpdateProduct(Request $req){
 
 }
 
-public function ViewProduct(Request $req){
+public function ViewProduct(Request $req) {
     $this->audit->RateLimit($req->ip());
 
     $currentDate = Carbon::now();
@@ -449,11 +449,12 @@ public function ViewProduct(Request $req){
 
     // Iterate through the products and check if the ValidUntil date has passed
     foreach ($products as $product) {
+        // Check if ValidUntil exists and if the current date is greater than ValidUntil
         if ($product->ValidUntil && $currentDate->gt($product->ValidUntil)) {
             // If current date is greater than ValidUntil, reset discount-related fields
             $product->DiscountPrice = 0;
             $product->DiscountPercentage = 0;
-            $product->ValidUntil = null;
+            $product->ValidUntil = null; // Optional: you might want to keep ValidUntil for reference
             // Save the product
             $product->save();
         }
@@ -470,11 +471,33 @@ function ViewProductAdmin(Request $req){
     return $s;
 }
 
-function ViewCategoryProduct(Request $req){
+public function ViewCategoryProduct(Request $req) {
     $this->audit->RateLimit($req->ip());
-    $s = Product::where("Quantity",">",0)->where("CategoryId", $req->CategoryId)->get();
-    return $s;
+
+    $currentDate = Carbon::now();
+
+    // Fetch products in the specified category with quantity greater than 0
+    $products = Product::where("Quantity", ">", 0)
+        ->where("CategoryId", $req->CategoryId)
+        ->get();
+
+    // Iterate through the products and check if the ValidUntil date has passed
+    foreach ($products as $product) {
+        // Check if ValidUntil exists and if the current date is greater than ValidUntil
+        if ($product->ValidUntil && $currentDate->gt($product->ValidUntil)) {
+            // If current date is greater than ValidUntil, reset discount-related fields
+            $product->DiscountPrice = 0;
+            $product->DiscountPercentage = 0;
+            $product->ValidUntil = null; // Optional: you might want to keep ValidUntil for reference
+            // Save the product
+            $product->save();
+        }
+    }
+
+    // Return all products in the specified category
+    return $products;
 }
+
 
 
 
@@ -485,23 +508,38 @@ function TestRateLimit(Request $req){
 }
 
 
-function ViewSingleProduct(Request $req){
+public function ViewSingleProduct(Request $req) {
     $this->audit->RateLimit($req->ip());
-    $s = Product::where("ProductId",$req->ProductId)->first();
-    if(!$s){
-        return response()->json(["message"=>"Product not found"]);
+
+    // Fetch the product based on ProductId
+    $product = Product::where("ProductId", $req->ProductId)->first();
+
+    // Check if the product exists
+    if (!$product) {
+        return response()->json(["message" => "Product not found"]);
     }
 
-    $s->ViewsCounter = $s->ViewsCounter+1;
-    $s->save();
+    // Check if the ValidUntil date has passed and reset discount fields if necessary
+    $currentDate = Carbon::now();
+    if ($product->ValidUntil && $currentDate->gt($product->ValidUntil)) {
+        // Reset discount-related fields if the current date is greater than ValidUntil
+        $product->DiscountPrice = 0;
+        $product->DiscountPercentage = 0;
+        $product->ValidUntil = null; // Optional: keep for reference if needed
+        $product->save();
+    }
 
+    // Increment the view counter
+    $product->ViewsCounter += 1;
+    $product->save();
+
+    // Log the product view in the audit
     $this->audit->ProductAssessment($req->ProductId, "Viewed Product");
 
-
-
-    return $s;
-
+    // Return the product details
+    return $product;
 }
+
 
 function DeleteProduct(Request $req){
     $this->audit->RateLimit($req->ip());
