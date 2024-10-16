@@ -35,6 +35,7 @@ Route::get('/user', function (Request $request) {
 
 
      Route::post('audit/AppSetup', [APPS::class, 'AppSetup']);
+     Route::post('audit/TopUp', [APPS::class, 'TopUp']);
      Route::post('SubscriptionPayment', [APPS::class, 'SubscriptionPayment']);
      Route::post('SubscriptionDetails', [APPS::class, 'SubscriptionDetails']);
      Route::post('SetUpCreateAdmin', [AdminUserController::class, 'SetUpCreateAdmin']);
