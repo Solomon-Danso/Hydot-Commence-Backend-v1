@@ -36,6 +36,7 @@ Route::get('/user', function (Request $request) {
 
      Route::post('audit/AppSetup', [APPS::class, 'AppSetup']);
      Route::post('SubscriptionPayment', [APPS::class, 'SubscriptionPayment']);
+     Route::post('SubscriptionDetails', [APPS::class, 'SubscriptionDetails']);
      Route::post('SetUpCreateAdmin', [AdminUserController::class, 'SetUpCreateAdmin']);
 
 
@@ -50,7 +51,6 @@ Route::middleware([PrepaidMeterMiddleware::class])->group(function () {
      *   🌐 GLOBAL ROUTES                        *
      *                                            *
      **********************************************/
-
      Route::post('LogIn', [AuthenticationController::class, 'LogIn']);
      Route::post('VerifyToken', [AuthenticationController::class, 'VerifyToken']);
      Route::post('ForgetPasswordStep1', [AuthenticationController::class, 'ForgetPasswordStep1']);

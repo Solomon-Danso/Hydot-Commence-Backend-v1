@@ -364,7 +364,36 @@ public function SubscriptionPayment(Request $req)
 }
 
 
+public function SubscriptionDetails()
+{
+    $s = PrepaidMeter::first();
 
+    if ($s == null) {
+        return response()->json([
+            'message' => 'Setup your account first'
+        ], 400);
+    }
+
+    // Parse the expiry date using Carbon and ignore the time component
+    $expiryDate = Carbon::parse($s->ExpireDate)->startOfDay();
+    $currentDate = Carbon::now()->startOfDay(); // Set the current date to the start of the day
+
+    // Calculate the days left as a whole number
+    $daysLeft = $currentDate->diffInDays($expiryDate, false); // Ensures the result is a whole number
+
+    // Format the expiry date to "20th October, 2024"
+    $formattedExpiryDate = $expiryDate->format('jS F, Y');
+
+    // Check the data type of ExpiryDate
+    $expiryDateType = is_string($s->ExpireDate) ? 'string' : 'datetime';
+
+    $data = [
+        "ExpiryDate" => $formattedExpiryDate,
+        "DaysLeft" => $daysLeft,
+    ];
+
+    return $data;
+}
 
 
 
