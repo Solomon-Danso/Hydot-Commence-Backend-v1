@@ -305,7 +305,7 @@ function ViewSingleAdmin(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_Single_Admin");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+    }
    $s = AdminUser::where("UserId", $req->UserId)->first();
 
     if($s==null){
@@ -326,7 +326,7 @@ function BlockAdmin(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Block_Admin");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
 
    $s = AdminUser::where("UserId", $req->UserId)->where('Role', '!=', 'SuperAdmin')->first();
@@ -357,7 +357,7 @@ function UnBlockAdmin(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_UnBlock_Admin");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
    $s = AdminUser::where("UserId", $req->UserId)->first();
 
@@ -389,7 +389,7 @@ function SuspendAdmin(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Suspend_Admin");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
    $s = AdminUser::where("UserId", $req->UserId)->where('Role', '!=', 'SuperAdmin')->first();
 
@@ -419,7 +419,7 @@ function UnSuspendAdmin(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_UnSuspend_Admin");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
    $s = AdminUser::where("UserId", $req->UserId)->first();
 
@@ -488,7 +488,7 @@ function ViewAllAdmin(Request $req) {
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_View_All_Admin");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
    $s = AdminUser::where('Role', '!=', 'SuperAdmin')->get();
 
@@ -512,7 +512,7 @@ function DeleteAdmin(Request $req){
    $rp =  $this->audit->RoleAuthenticator($req->AdminId, "Can_Delete_Admin");
    if ($rp->getStatusCode() !== 200) {
     return $rp;  // Return the authorization failure response
-}
+ }
 
    $s = AdminUser::where("UserId", $req->UserId)->first();
 

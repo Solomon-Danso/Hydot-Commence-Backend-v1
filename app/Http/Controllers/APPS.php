@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
-
+use App\Models\PrepaidMeter;
+use Illuminate\Support\Facades\Http;
 
 
 class APPS extends Controller
@@ -226,6 +227,144 @@ function GetOneReply(Request $req){
     }
     return $c;
 }
+
+
+function AppSetup(Request $req){
+
+    $originHeader = $req->header('Origin');
+    $refererHeader = $req->header('Referer');
+    $allowedOrigin = "https://adminpanel.hydottech.com";
+    //$allowedOrigin = "http://localhost:3000";
+
+    if ($originHeader !== $allowedOrigin && $refererHeader !== $allowedOrigin) {
+        $response['status'] = 'Failed';
+        $response['message'] = 'Unauthorized request source';
+        return response()->json($response, 403);
+    }
+
+    $p = PrepaidMeter::firstOrNew();
+
+    $fields = ["Token","productId","packageType",
+                "Amount","apiHost","apiKey","softwareID",
+                "companyId","email","companyName",
+                "companyPhone","apiSecret"
+            ];
+
+    foreach($fields as $field){
+
+         if($req->filled($field)){
+            $p->$field = $req->$field;
+         }
+
+    }
+
+    $saver = $p->save();
+    if($saver){
+        $response['status'] = 'Success';
+        $response['message'] = 'Setup Completed';
+        return response()->json($response, 200);
+    }
+    else{
+        $response['status'] = 'Failed';
+        $response['message'] = 'Setup Failed';
+        return response()->json($response, 400);
+    }
+
+
+}
+
+
+
+function TopUp(Request $req){
+
+    $originHeader = $req->header('Origin');
+    $refererHeader = $req->header('Referer');
+    $allowedOrigin = "https://mainapi.hydottech.com";
+
+
+    if ($originHeader !== $allowedOrigin && $refererHeader !== $allowedOrigin) {
+        $response['status'] = 'Failed';
+        $response['message'] = 'Unauthorized request source';
+        return response()->json($response, 403);
+    }
+
+    $p = PrepaidMeter::first();
+
+    if($p->apiHost!==$req->apiHost){
+        $response['message'] = 'Invalid API Host';
+        return response()->json($response, 403);
+    }
+
+    if($p->companyId!==$req->companyId){
+        $response['message'] = 'Invalid Company ID';
+        return response()->json($response, 403);
+    }
+
+    if($p->productId!==$req->productId){
+        $response['message'] = 'Invalid Product ID';
+        return response()->json($response, 403);
+    }
+
+    if($p->packageType!==$req->packageType){
+        $response['message'] = 'Invalid Package Type';
+        return response()->json($response, 403);
+    }
+
+    if($p->softwareID!==$req->softwareID){
+        $response['message'] = 'Invalid Software ID';
+        return response()->json($response, 403);
+    }
+
+    $p->ExpireDate = $req->expireDate;
+
+    $saver = $p->save();
+    if($saver){
+        $response['status'] = 'Success';
+        $response['message'] = 'Subscription Completed';
+        return response()->json($response, 200);
+    }
+    else{
+        $response['status'] = 'Failed';
+        $response['message'] = 'Subscription Failed';
+        return response()->json($response, 400);
+    }
+
+
+}
+
+
+
+public function SubscriptionPayment(Request $req)
+{
+    $s = PrepaidMeter::first();
+
+    if ($s == null) {
+        return response()->json([
+            'message' => 'Setup your account first'
+        ], 400);
+    }
+
+    // Define the external API URL with the parameters
+    $externalApiUrl = "https://mainapi.hydottech.com/api/HCSSchedulePayment/{$s->softwareID}/{$req->amount}";
+
+    try {
+        // Send a GET request to the external API
+        $apiResponse = Http::get($externalApiUrl);
+
+        // Return the exact response from the external API
+        return response($apiResponse->body(), $apiResponse->status());
+
+    } catch (\Exception $e) {
+        // Handle any exceptions that occur during the request
+        return response()->json([
+            'status' => 'Failed',
+            'message' => 'An error occurred: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
 
 
 
